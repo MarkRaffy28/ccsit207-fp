@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins";
+}
+
+/* HEADER */
+.navbar {
+  background-color: #8f0002;
+}
+
+.logo {
+  height: 30px;
+  border-radius: 50%;
+}
+
+.navbar-toggler,
+.navbar-toggler:focus,
+.navbar-toggler:active {
+  border: none;
+  box-shadow: none;
+}
+
+.navbar .nav-link {
+  color: #ffcc00;
+}
+
+.navbar .nav-link.active,
+.navbar .nav-link:hover {
+  color: #00ff00 !important;
+}
+
+/* FOOTER */
+footer {
+  background-color: #8f0002;
+  color: #ffcc00;
+}
+
+footer a, p {
+  text-decoration: none;
+  color: white;
+  transition: all 0.2s ease-in-out;
+}
+
+footer a:hover {
+  color: #00ff00 !important;
+}
+
+footer .fa-solid {
+  margin-right: 10px;
+}
+
+.fa-brands {
+  font-size: 2rem;
+  margin-right: 10px;
+}
+
+.fa-facebook:hover {color: #3b5998}
+.fa-youtube:hover {color: #ff0033}
+
+
+/* GENERAL */
+main {
+  min-height: 100vh;
+}
