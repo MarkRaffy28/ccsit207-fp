@@ -9,7 +9,7 @@
   //
   function includeLinkScript() {
 ?>
-    <link rel="shortcut icon" href="" type="image/jpg">
+    <link rel="shortcut icon" href="https://ispsc.edu.ph/file-manager/images/ispsc_logo_2.png" type="image/jpg">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     
@@ -37,7 +37,7 @@
       <nav class="navbar navbar-expand-lg sticky-top" data-bs-theme="dark">
         <div class="container-fluid">
           <a class="navbar-brand" href="index.php">
-            <img src="" alt="logo" class="logo">
+            <img src="https://ispsc.edu.ph/file-manager/images/ispsc_logo_2.png" alt="logo" class="logo">
             <span class="fw-bold navbar-title">ISPSC Library Management System</span>
           </a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-content">
@@ -55,7 +55,7 @@
                 <a class="nav-link <?= ($pageName == "profile") ? "active" : "" ?> fw-bold" href="profile.php">Profile</a>
               </li>
             </ul>
-            <?php if(isset($_SESSION["id"]) && isset($_SESSION["username"])): ?>
+            <?php if(isset($_SESSION["id"])): ?>
               <form method="POST" action="logout.php">
                 <input type="submit" value="Logout" class="btn btn-sm btn-danger ms-lg-2">
               </form>
@@ -74,11 +74,11 @@
       <footer class="pt-4">
         <div class="container">
           <div class="row">
-            <div class="col-md-3 mb-3">
+            <div class="col-md-4 mb-3">
               <h5 class="fw-bold">About Us</h5>
               <p>Our clinic is dedicated to providing quality and compassionate care for every patient.</p>
             </div>
-            <div class="contact-us col-md-3 mb-3">
+            <div class="contact-us col-md-4 mb-3">
               <h5 class="fw-bold">Contact Us</h5>
               <ul class="list-unstyled">
                 <li>
@@ -92,13 +92,13 @@
                 </li>
               </ul>
             </div>
-            <div class="col-md-3 mb-4">
+            <div class="col-md-2 mb-4"> 
               <h5 class="fw-bold">Follow Us</h5>
               <a href="https://www.facebook.com/profile.php?id=100095026794023"><i class="fa-brands fa-facebook"></i></a>
               <a href="https://www.youtube.com/@ISPSC"><i class="fa-brands fa-youtube"></i></a>
               <a href="https://x.com/ISPSC_Official"><i class="fa-brands fa-x-twitter"></i></a>
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-2 mb-3">
               <h5 class="fw-bold">Legal</h5>
               <ul class="list-unstyled">
                 <li><a href="#">Privacy</a></li>

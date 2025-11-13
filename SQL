@@ -7,9 +7,10 @@ first_name VARCHAR(50) NOT NULL,
 middle_name VARCHAR(50),
 last_name VARCHAR(50) NOT NULL,
 extension_name VARCHAR(10) DEFAULT NULL,
-student_id VARCHAR(50) NOT NULL UNIQUE,
+user_id VARCHAR(50) NOT NULL UNIQUE,
+birth_date DATE NOT NULL,
 gender ENUM('Male', 'Female', 'Other') NOT NULL,
-course VARCHAR(100) NOT NULL,
+program VARCHAR(100) NOT NULL,
 major VARCHAR(100) DEFAULT 'N/A',
 strand VARCHAR(100) DEFAULT 'N/A',
 address VARCHAR(255),
@@ -82,6 +83,3 @@ FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
 FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
 UNIQUE (user_id, book_id)
 );
-Nov 4, 2025, 9:04 AM
-Alexandra
-sino pala magdedesign? ikaw 
