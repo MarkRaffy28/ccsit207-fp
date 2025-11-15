@@ -49,7 +49,24 @@
                 <a class="nav-link <?= ($pageName == "index") ? "active" : "" ?> fw-bold" href="index.php">Home</a>
               </li>
               <li class="nav-item <?= (!isset($_SESSION["id"])) ? "d-none" : "" ?>">
-                <a class="nav-link <?= ($pageName == "appointments") ? "active" : "" ?> fw-bold" href="appointments.php">Appointments</a>
+                <a class="nav-link position-relative <?= ($pageName == 'notifications') ? 'active' : '' ?> fw-bold" href="notifications.php">
+                    <?php
+                      global $conn;
+
+                      $notification_count = 0;
+                      if (isset($_SESSION["id"])) {
+                        $user_id = $_SESSION["id"];
+                        $result = $conn->query("SELECT COUNT(id) FROM book_notifications WHERE user_id = $user_id AND is_read = 0");
+                        $notification_count = $result->fetch_row()[0];
+                      }
+                    ?>
+                    Notifications
+                    <?php if ($notification_count > 0): ?>
+                      <span class="badge bg-danger rounded-pill position-absolute top-75 start-100 translate-middle fs-7">
+                        <?= $notification_count ?>
+                      </span>
+                    <?php endif; ?>
+                </a>
               </li>
               <li class="nav-item <?= (!isset($_SESSION["id"])) ? "d-none" : "" ?>">
                 <a class="nav-link <?= ($pageName == "profile") ? "active" : "" ?> fw-bold" href="profile.php">Profile</a>
@@ -67,7 +84,7 @@
       </nav>
 <?php
   }
-  
+
 //
   function showFooter() {
 ?>

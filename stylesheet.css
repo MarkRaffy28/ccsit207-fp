@@ -68,6 +68,20 @@ main {
   min-height: 100vh;
 }
 
+.fs-7 { font-size: 10px !important; }
+
+#password {
+  position: relative;
+}
+
+i.eye {
+  position: absolute;
+  top: 50%;
+  right: 30px;
+  transform: translateY(-50%);
+  z-index: 20;
+}
+
 @media(min-width: 800px){
   .px-lg-6 {
     --mx-lg-6-padding-x: 10rem;       
@@ -83,6 +97,22 @@ main {
   grid-auto-rows: 300px;
   gap: 20px;
 }
+
+.book {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.book:hover {
+  transform: scale(1.05) !important;
+}
+
+.book.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 
 .book-image {
   width: 100%;
@@ -163,4 +193,19 @@ main {
 
 .profile-change-chevron h6 {
   color: 091216;
+}
+
+/* NOTIFICATIONS */
+.notification {
+  transition: all 0.3s ease-in-out;
+}
+
+.notification:hover {
+  transform: scale(1.03);
+}
+
+@media (min-width: 800px) {
+  .notification:hover {
+    transform: scale(1.01);
+  }
 }
