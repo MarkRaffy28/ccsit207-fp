@@ -50,10 +50,7 @@
       exit;
     }
   }
-
-
-  showHeader("Notifications");  
-
+  
   $stmt = $conn->prepare("SELECT 
       n.id,
       b.id AS book_id,
@@ -68,12 +65,14 @@
   $stmt->bind_param("i", $user_id);
   $stmt->execute();
   $result = $stmt->get_result();
+
+  showHeader("Book Notifications");  
 ?>
 
 <main class="m-4">
   <?= showAlert(); ?>
   <section>
-    <h3 class="fw-semibold"><i class="bi bi-bell"></i> Notifications</h3>
+    <h3 class="fw-semibold"><i class="bi bi-bell"></i> Book Notifications</h3>
   </section>
   <section class="my-3">
     <?php 

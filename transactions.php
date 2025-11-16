@@ -45,16 +45,16 @@
     } 
 
     $stmt_reserve_book = $conn->prepare("UPDATE transactions SET
-        user_id = ?, 
         book_id = ?, 
         borrow_date = ?, 
         return_date = ?, 
         due_date = ?
-      WHERE id = ? ");
-    $stmt_reserve_book->bind_param("iisssi", $user_id, $edit_book_id, $edit_borrow_date, $edit_return_date, $edit_due_date, $edit_id);
+      WHERE id = ? AND user_id = ?");
+    $stmt_reserve_book->bind_param("isssii", $edit_book_id, $edit_borrow_date, $edit_return_date, $edit_due_date, $edit_id, $user_id);
     
     if (!$stmt_reserve_book->execute()) {
       $_SESSION["msg"] = ["danger", "Update reservation error. Please try again later."];
+      header ("Location: " . $_SERVER["PHP_SELF"]);
       exit;
     }
 
@@ -77,8 +77,8 @@
     $cancel_id = $_POST["cancel_id"];
     $cancel_book_id = $_POST["cancel_book_id"];
 
-    $stmt_cancel_reservation = $conn->prepare("UPDATE transactions SET status = 'Cancelled' WHERE id = ?");
-    $stmt_cancel_reservation->bind_param("i", $cancel_id);
+    $stmt_cancel_reservation = $conn->prepare("UPDATE transactions SET status = 'Cancelled' WHERE id = ? AND user_id = ?");
+    $stmt_cancel_reservation->bind_param("ii", $cancel_id, $user_id);
     
     if (!$stmt_cancel_reservation->execute()) {
       $_SESSION["msg"] = ["danger", "Cancellation error. Please try again later."];
@@ -101,23 +101,45 @@
 <main class="m-4">
   <?= showAlert(); ?>
   <section class="my-3">
-    <h3 class="fw-semibold"><i class="bi bi-receipt"></i> Transactions</h3>
+    <div class="row d-flex justify-content-between align-items-center gy-3">
+      <h3 class="col-12 col-lg-9 fw-semibold"><i class="bi bi-receipt"></i> Transactions</h3>
+      <div class="col-12 col-lg-3">
+        <div class="position-relative search-container">
+          <input type="text" id="search_input" class="form-control ps-5" placeholder="Search...">
+          <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-muted">
+            <i class="bi bi-search"></i>
+          </span>
+        </div>
+      </div>
+    </div>
     <div class=" px-lg-6">
       <ul class="nav nav-pills mt-4 border-bottom border-primary" role="tablist">
         <li class="nav-item">
           <button class="nav-link active rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#reserved" type="button">Reserved</button>
         </li>
         <li class="nav-item">
-          <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#request" type="button">Borrowed</button>
+          <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#borrowed" type="button">Borrowed</button>
         </li>
         <li class="nav-item">
-          <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#upcoming" type="button">Returned</button>
+          <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#returned" type="button">Returned</button>
         </li>
         <li class="nav-item">
-          <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#history" type="button">Overdue</button>
+          <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0 position-relative" data-bs-toggle="tab" data-bs-target="#overdue" type="button">
+            Overdue
+            <?php
+              $overdue_notif_result = $conn->query("SELECT COUNT(id) FROM transactions WHERE status = 'Overdue' AND user_id = $user_id");
+              $overdue_notif_count = $overdue_notif_result->fetch_row()[0]; 
+  
+              if ($overdue_notif_count > 0) {
+                echo "<span class='badge bg-danger rounded-pill position-absolute top-75 start-100 translate-middle fs-7'>
+                      $overdue_notif_count
+                    </span>";
+              }
+            ?>
+          </button>
         </li>
         <li class="nav-item">
-          <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#history" type="button">Cancelled</button>
+          <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#cancelled" type="button">Cancelled</button>
         </li>
         <li class="nav-item">
           <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#history" type="button">History</button>
@@ -128,13 +150,11 @@
 
   <section class="tab-content px-lg-6">
     <div class="tab-pane show fade active" id="reserved" role="tabpanel">
-      <h5 class="fw-semibold text-center">Reserved Book(s)</h5>
+      <h5 class="fw-semibold text-center"><i class="bi bi-bookmark-fill"></i> Reserved Book(s)</h5>
       <div class="container my-4">
         <?php
           $stmt_show_reserved = $conn->prepare("SELECT 
-              t.id,
-              t.borrow_date,
-              t.return_date,
+              t.*,
               b.id AS book_id,
               b.title,
               b.author
@@ -153,7 +173,15 @@
             $return_date = date("F j, Y", strtotime($reserved_row["return_date"]));
             
         ?>
-            <div class="card border-0 shadow-sm rounded-4 mb-3">
+            <div class="card transaction border-0 shadow-sm rounded-4 mb-3 cursor-pointer"
+              data-title="<?= $reserved_row["title"] ?>"
+              data-author="<?= $reserved_row["author"] ?>"
+              data-reservedate="<?= $reserved_row["reserve_date"] ?>"
+              data-borrowdate="<?= $reserved_row["borrow_date"] ?>"
+              data-returndate="<?= $reserved_row["return_date"] ?>"
+              data-duedate="<?= $reserved_row["due_date"] ?>"
+              data-status="<?= $reserved_row["status"] ?>"
+            >
                 <div class="card-body">
                   <div class="row justify-content-between align-items-center">
                     <div class="col-md-5">
@@ -183,13 +211,15 @@
                           data-id="<?= $reserved_row["id"] ?>"
                           data-bookid="<?= $reserved_row["book_id"] ?>"
                           data-borrowdate="<?= $reserved_row["borrow_date"] ?>"
-                          data-returndate="<?= $reserved_row["return_date"] ?>"                       
+                          data-returndate="<?= $reserved_row["return_date"] ?>" 
+                          onclick="event.stopPropagation()"                      
                         >
                           <i class="bi bi-pencil me-1"></i>Edit
                         </button>
                         <button class="cancel-button btn btn-sm btn-danger" 
                           data-id="<?= $reserved_row["id"] ?>"
                           data-bookid="<?= $reserved_row["book_id"] ?>"
+                          onclick="event.stopPropagation()"      
                         >
                           <i class="bi bi-x-circle me-1"></i>Cancel
                         </button>
@@ -203,8 +233,443 @@
         ?>
       </div>
     </div>
+
+    <div class="tab-pane fade" id="borrowed" role="tabpanel">
+      <h5 class="fw-semibold text-center"><i class="bi bi-journal-bookmark-fill"></i> Borrowed Book(s)</h5>
+      <div class="container my-4">
+        <?php
+          $stmt_show_borrowed = $conn->prepare("SELECT 
+              t.*,
+              b.id AS book_id,
+              b.title,
+              b.author
+            FROM transactions t
+            JOIN books b ON t.book_id = b.id
+            WHERE t.user_id = ? AND status = 'Borrowed'");
+          $stmt_show_borrowed->bind_param("i", $_SESSION["id"]);
+          $stmt_show_borrowed->execute();
+          $borrowed_result = $stmt_show_borrowed->get_result();
+          
+          if ($borrowed_result->num_rows == 0) {
+            echo '<p class="text-center text-muted fw-semibold mt-4">No transaction available.</p>';
+          }
+          while ($borrowed_row = $borrowed_result->fetch_assoc()):
+            $return_date = date("F j, Y", strtotime($borrowed_row["return_date"]));
+            $due_date = date("F j, Y", strtotime($borrowed_row["due_date"]));
+        ?>
+            <div class="card transaction border-0 shadow-sm rounded-4 mb-3 cursor-pointer"
+              data-title="<?= $borrowed_row["title"] ?>"
+              data-author="<?= $borrowed_row["author"] ?>"
+              data-reservedate="<?= $borrowed_row["reserve_date"] ?>"
+              data-borrowdate="<?= $borrowed_row["borrow_date"] ?>"
+              data-returndate="<?= $borrowed_row["return_date"] ?>"
+              data-duedate="<?= $borrowed_row["due_date"] ?>"
+              data-status="<?= $borrowed_row["status"] ?>"
+            >
+                <div class="card-body">
+                  <div class="row justify-content-between align-items-center">
+                    <div class="col-md-6">
+                      <div class="d-flex justify-content-between align-items-center gap-2">
+                        <h6 class="mb-0 fw-normal"> 
+                          <a href="book_information.php?book_id=<?= $borrowed_row["book_id"]; ?>" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                            <?= $borrowed_row["title"] ?> 
+                          </a>
+                          by
+                          <span class="fw-semibold">  <?= $borrowed_row["author"] ?></span>
+                        </h6>
+                      </div>
+                    </div>
+                    <div class="col-md-6 my-2 my-md-0 d-flex flex-column flex-lg-row justify-content-lg-end gap-lg-3">
+                      <small class="text-muted text-start">
+                        <span class="d-block"> 
+                          Return Date: <span class="fw-semibold"><?= $return_date ?></span> 
+                        </span>
+                        <span class="d-block">
+                          Due Date: <span class="fw-bold"><?= $due_date ?></span>
+                        </span>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+            </div>
+        <?php
+          endwhile;
+        ?>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="returned" role="tabpanel">
+      <h5 class="fw-semibold text-center"><i class="bi bi-check-circle-fill"></i> Returned Book(s)</h5>
+      <div class="container my-4">
+        <?php
+          $stmt_show_returned = $conn->prepare("SELECT 
+              t.*,
+              t.fine_amount,
+              b.id AS book_id,
+              b.title,
+              b.author
+            FROM transactions t
+            JOIN books b ON t.book_id = b.id
+            WHERE t.user_id = ? AND status = 'Returned'");
+          $stmt_show_returned->bind_param("i", $_SESSION["id"]);
+          $stmt_show_returned->execute();
+          $returned_result = $stmt_show_returned->get_result();
+          
+          if ($returned_result->num_rows == 0) {
+            echo '<p class="text-center text-muted fw-semibold mt-4">No transaction available.</p>';
+          }
+          while ($returned_row = $returned_result->fetch_assoc()):
+            $borrow_date = date("F j, Y", strtotime($returned_row["borrow_date"]));
+            $return_date = date("F j, Y", strtotime($returned_row["return_date"]));
+        ?>
+            <div class="card transaction border-0 shadow-sm rounded-4 mb-3 cursor-pointer"
+              data-title="<?= $returned_row["title"] ?>"
+              data-author="<?= $returned_row["author"] ?>"
+              data-reservedate="<?= $returned_row["reserve_date"] ?>"
+              data-borrowdate="<?= $returned_row["borrow_date"] ?>"
+              data-returndate="<?= $returned_row["return_date"] ?>"
+              data-duedate="<?= $returned_row["due_date"] ?>"
+              data-notes="<?= $returned_row["notes"] ?? ""?>"
+              data-fineamount="<?= $returned_row["fine_amount"] ?>"
+              data-status="<?= $returned_row["status"] ?>"
+            >
+                <div class="card-body">
+                  <div class="row justify-content-between align-items-center">
+                    <div class="col-md-6">
+                      <div class="d-flex justify-content-between align-items-center gap-2">
+                        <h6 class="mb-0 fw-normal"> 
+                          <a href="book_information.php?book_id=<?= $returned_row["book_id"]; ?>" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                            <?= $returned_row["title"] ?> 
+                          </a>
+                          by
+                          <span class="fw-semibold">  <?= $returned_row["author"] ?></span>
+                        </h6>
+                      </div>
+                    </div>
+                    <div class="col-md-6 my-2 my-md-0 d-flex flex-column flex-lg-row justify-content-lg-end gap-lg-3">
+                      <small class="text-muted text-start">
+                        <span class="d-block">
+                          Borrow Date: <span class="fw-bold"><?= $borrow_date ?></span>
+                        </span>
+                        <span class="d-block"> 
+                          Return Date: <span class="fw-semibold"><?= $return_date ?></span> 
+                        </span>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+            </div>
+        <?php
+          endwhile;
+        ?>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="overdue" role="tabpanel">
+      <h5 class="fw-semibold text-center"><i class="bi bi-exclamation-triangle-fill"></i> Overdue Book(s)</h5>
+      <div class="container my-4">
+        <?php
+          $stmt_show_overdue = $conn->prepare("SELECT 
+              t.*,
+              t.fine_amount,
+              b.id AS book_id,
+              b.title,
+              b.author
+            FROM transactions t
+            JOIN books b ON t.book_id = b.id
+            WHERE t.user_id = ? AND status = 'Overdue'");
+          $stmt_show_overdue->bind_param("i", $_SESSION["id"]);
+          $stmt_show_overdue->execute();
+          $overdue_result = $stmt_show_overdue->get_result();
+          
+          if ($overdue_result->num_rows == 0) {
+            echo '<p class="text-center text-muted fw-semibold mt-4">No transaction available.</p>';
+          }
+          while ($overdue_row = $overdue_result->fetch_assoc()):
+            $return_date = date("F j, Y", strtotime($overdue_row["return_date"]));
+            $due_date = date("F j, Y", strtotime($overdue_row["due_date"]));
+            $overdue_id = $overdue_row["id"];
+        ?>
+            <div class="card border-1 border-danger shadow-sm rounded-4 mb-3 cursor-pointer"
+              data-title="<?= $overdue_row["title"] ?>"
+              data-author="<?= $overdue_row["author"] ?>"
+              data-reservedate="<?= $overdue_row["reserve_date"] ?>"
+              data-borrowdate="<?= $overdue_row["borrow_date"] ?>"
+              data-returndate="<?= $overdue_row["return_date"] ?>"
+              data-duedate="<?= $overdue_row["due_date"] ?>"
+              data-notes="<?= $overdue_row["notes"] ?? ""?>"
+              data-fineamount="<?= $overdue_row["fine_amount"] ?>"
+              data-status="<?= $overdue_row["status"] ?>"
+              onclick="window.location.href='fines.php'"
+            >
+              <span class="<?= ($row["is_read"] == 0) ? "position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger fs-6": "d-none"; ?>">
+                <i class="bi bi-exclamation"></i>
+              </span>
+                <div class="card-body">
+                  <div class="row justify-content-between align-items-center">
+                    <div class="col-md-4">
+                      <div class="d-flex justify-content-between align-items-center gap-2">
+                        <h6 class="mb-0 fw-normal"> 
+                          <a href="book_information.php?book_id=<?= $overdue_row["book_id"]; ?>" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                            <?= $overdue_row["title"] ?> 
+                          </a>
+                          by
+                          <span class="fw-semibold">  <?= $overdue_row["author"] ?></span>
+                        </h6>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="d-flex justify-content-lg-end align-items-center gap-3 mt-2 mt-lg-0">
+                        <small class='text-muted text-start'>
+                          <span class='d-block'> 
+                            Fine Amount: <span class='fw-semibold'>₱<?= $overdue_row["fine_amount"] ?></span> 
+                          </span>
+                        </small>
+                      </div>
+                    </div>
+                    <div class="col-md-4 my-2 my-md-0 d-flex flex-column flex-lg-row justify-content-lg-end gap-lg-3">
+                      <small class="text-muted text-start">
+                        <span class="d-block"> 
+                          Return Date: <span class="fw-semibold"><?= $return_date ?></span> 
+                        </span>
+                        <span class="d-block">
+                          Due Date: <span class="fw-bold"><?= $due_date ?></span>
+                        </span>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+            </div>
+        <?php
+          endwhile;
+        ?>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="cancelled" role="tabpanel">
+      <h5 class="fw-semibold text-center"><i class="bi bi-x-circle-fill"></i> Cancelled Book(s)</h5>
+      <div class="container my-4">
+        <?php
+          $stmt_show_cancelled = $conn->prepare("SELECT 
+              t.*,
+              t.fine_amount,
+              b.id AS book_id,
+              b.title,
+              b.author
+            FROM transactions t
+            JOIN books b ON t.book_id = b.id
+            WHERE t.user_id = ? AND status = 'Cancelled'");
+          $stmt_show_cancelled->bind_param("i", $_SESSION["id"]);
+          $stmt_show_cancelled->execute();
+          $cancelled_result = $stmt_show_cancelled->get_result();
+          
+          if ($cancelled_result->num_rows == 0) {
+            echo '<p class="text-center text-muted fw-semibold mt-4">No transaction available.</p>';
+          }
+          while ($cancelled_row = $cancelled_result->fetch_assoc()):
+            $reserve_date = date("F j, Y", strtotime($cancelled_row["reserve_date"]));
+        ?>
+            <div class="card transaction border-0 shadow-sm rounded-4 mb-3 cursor-pointer"
+              data-title="<?= $cancelled_row["title"] ?>"
+              data-author="<?= $cancelled_row["author"] ?>"
+              data-reservedate="<?= $cancelled_row["reserve_date"] ?>"
+              data-borrowdate="<?= $cancelled_row["borrow_date"] ?>"
+              data-returndate="<?= $cancelled_row["return_date"] ?>"
+              data-duedate="<?= $cancelled_row["due_date"] ?>"
+              data-notes="<?= $cancelled_row["notes"] ?? ""?>"
+              data-fineamount="<?= $cancelled_row["fine_amount"] ?>"
+              data-status="<?= $cancelled_row["status"] ?>"
+            >
+                <div class="card-body">
+                  <div class="row justify-content-between align-items-center">
+                    <div class="col-md-6">
+                      <div class="d-flex justify-content-between align-items-center gap-2">
+                        <h6 class="mb-0 fw-normal"> 
+                          <a href="book_information.php?book_id=<?= $cancelled_row["book_id"]; ?>" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                            <?= $cancelled_row["title"] ?> 
+                          </a>
+                          by
+                          <span class="fw-semibold">  <?= $cancelled_row["author"] ?></span>
+                        </h6>
+                      </div>
+                    </div>
+                    <div class="col-md-6 my-2 my-md-0 d-flex flex-column flex-lg-row justify-content-lg-end gap-lg-3">
+                      <small class="text-muted text-start">
+                        <span class="d-block"> 
+                          Reserve Date: <span class="fw-semibold"><?= $reserve_date ?></span> 
+                        </span>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+            </div>
+        <?php
+          endwhile;
+        ?>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="history" role="tabpanel">
+      <h5 class="fw-semibold text-center d-flex justify-content-center align-items-center gap-3">
+        <i class="bi bi-hourglass-split"></i> History
+        <div class="d-flex align-items-center gap-1">
+          <label for="filter_status" class="form-label m-0 p-0"> <i class="bi bi-filter fs-4 fw-bold text-muted"></i> </label>
+          <select id="filter_status" class="form-select w-auto">
+            <option value="All">All</option>
+            <option value="Reserved">Reserved</option>
+            <option value="Borrowed">Borrowed</option>
+            <option value="Returned">Returned</option>
+            <option value="Overdue">Overdue</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+      </h5>
+      <div class="container my-4">
+        <?php
+          $stmt_show_history = $conn->prepare("SELECT 
+              t.*,
+              t.fine_amount,
+              b.id AS book_id,
+              b.title,
+              b.author
+            FROM transactions t
+            JOIN books b ON t.book_id = b.id
+            WHERE t.user_id = ?
+            ORDER BY id DESC");
+          $stmt_show_history->bind_param("i", $_SESSION["id"]);
+          $stmt_show_history->execute();
+          $history_result = $stmt_show_history->get_result();
+          
+          if ($history_result->num_rows == 0) {
+            echo '<p class="text-center text-muted fw-semibold mt-4">No transaction available.</p>';
+          }
+          while ($history_row = $history_result->fetch_assoc()):
+            $borrow_date = date("F j, Y", strtotime($history_row["borrow_date"]));
+            $return_date = date("F j, Y", strtotime($history_row["return_date"]));
+        ?>
+            <div class="card history transaction border-0 shadow-sm rounded-4 mb-3 cursor-pointer"
+              data-title="<?= $history_row["title"] ?>"
+              data-author="<?= $history_row["author"] ?>"
+              data-reservedate="<?= $history_row["reserve_date"] ?>"
+              data-borrowdate="<?= $history_row["borrow_date"] ?>"
+              data-returndate="<?= $history_row["return_date"] ?>"
+              data-duedate="<?= $history_row["due_date"] ?>"
+              data-notes="<?= $history_row["notes"] ?? ""?>"
+              data-fineamount="<?= $history_row["fine_amount"] ?>"
+              data-status="<?= $history_row["status"] ?>"
+            >
+                <div class="card-body">
+                  <div class="row justify-content-between align-items-center">
+                    <div class="col-md-4">
+                      <div class="d-flex flex-row justify-content-between align-items-center gap-2">
+                        <h6 class="mb-0 fw-normal"> 
+                          <a href="book_information.php?book_id=<?= $history_row["book_id"]; ?>" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                            <?= $history_row["title"] ?> 
+                          </a>
+                          by
+                          <span class="fw-semibold">  <?= $history_row["author"] ?></span>
+                        </h6>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <?php
+                        switch ($history_row["status"]) {
+                          case "Reserved": $bg_text_color = "bg-warning text-dark"; $icon = "bookmark"; break;
+                          case "Borrowed": $bg_text_color = "bg-success text-white"; $icon = "journal-bookmark"; break;
+                          case "Overdue": $bg_text_color = "bg-danger text-white"; $icon = "exclamation-triangle"; break;
+                          case "Returned": $bg_text_color = "bg-primary text-white"; $icon = "check-circle"; break;
+                          case "Cancelled": $bg_text_color = "bg-secondary text-white"; $icon = "x-circle"; break;
+                        }
+                        $fine_amount = $history_row["fine_amount"];
+                      ?>
+                      <div class="d-flex align-items-center gap-3 mt-2 mt-lg-0">
+                        <?php
+                          if ($history_row["status"] == "Overdue") {
+                            echo "
+                              <small class='text-muted text-start'>
+                                <span class='d-block'> 
+                                  Fine Amount: <span class='fw-semibold'>₱$fine_amount</span> 
+                                </span>
+                              </small>";
+                          }
+                        ?>
+                        <span class="badge <?= $bg_text_color ?> align-middle ms-auto px-3 py-2">
+                          <i class="bi bi-<?= $icon; ?>"></i> 
+                          <?= $history_row["status"] ?> 
+                        </span>
+                      </div>
+                    </div>
+                    <div class="col-md-4 my-2 my-md-0 d-flex flex-column flex-lg-row justify-content-lg-end gap-lg-3">
+                      <small class="text-muted text-start">
+                        <span class="d-block"> 
+                          Borrow Date: <span class="fw-semibold"><?= $borrow_date ?></span> 
+                        </span>
+                        <span class="d-block"> 
+                          Return Date: <span class="fw-semibold"><?= $return_date ?></span> 
+                        </span>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+            </div>
+        <?php
+          endwhile;
+        ?>
+      </div>
+    </div>
   </section>
 
+
+  <div class="modal fade p-4" id="show_transaction_information" tabindex="-1">  
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+      <div class="modal-content rounded-4 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title w-100 text-center fw-bold">TRANSACTION INFORMATION</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>     
+        <div class="modal-body text-center">
+          <table id="transaction-information-table" class="table table-borderless table-hover text-start">
+            <tr>
+              <th>Book Title:</th>
+              <td id="book_title"></td>
+            </tr>
+            <tr>
+              <th>Book Author:</th>
+              <td id="book_author"></td>
+            </tr>
+            <tr>
+              <th>Reserve Date:</th>
+              <td id="reserve_date"></td>
+            </tr>
+            <tr>
+              <th>Borrow Date:</th>
+              <td id="borrow_date"></td>
+            </tr>
+            <tr>
+              <th>Return Date:</th>
+              <td id="return_date"></td>
+            </tr>
+            <tr>
+              <th>Due Date:</th>
+              <td id="due_date"></td>
+            </tr>
+            <tr>
+              <th>Notes:</th>
+              <td id="notes"></td>
+            </tr>
+            <tr>
+              <th>Fine Amount:</th>
+              <td id="fine_amount"></td>
+            </tr>
+            <tr>
+              <th>Status:</th>
+              <td id="status"></td>
+            </tr>
+          </table>
+        </div>
+      </div>  
+    </div>
+  </div>
 
   <div class="modal fade p-4" id="edit_reservation" tabindex="-1">  
     <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
@@ -230,7 +695,8 @@
                       $book_id = $row["id"];
                       $book_title = $row["title"];
                       $book_author = $row["author"];
-                      $disabled = ($row["available_copies"] <= 0) ? "disabled" : "";
+                      $copies = $row["available_copies"];
+                      $disabled = ($copies <= 0) ? "disabled" : "";
 
                       echo "<option value='$book_id' data-copies='$copies' $disabled $disabled>$book_title by $book_author</option>";
                     }
@@ -284,8 +750,78 @@
   </div>
 
   <script>
-    const editBorrowDate = document.getElementById("edit_borrow_date");
-    const editReturnDate = document.getElementById("edit_return_date");
+    document.getElementById("search_input").addEventListener("input", () => {
+      const query = document.getElementById("search_input").value.toLowerCase();
+      const card = document.querySelectorAll(".card.history");
+
+      card.forEach(card => {
+        const dataText = [
+          card.dataset.title,
+          card.dataset.description,
+          card.dataset.reservedate,
+          card.dataset.borrowdate,
+          card.dataset.returndate,
+          card.dataset.duedate,
+          card.dataset.status
+        ].join(" ").toLowerCase();
+
+        card.classList.toggle("d-none", !(query === "" || dataText.includes(query)));
+      });
+    });
+
+    document.getElementById("filter_status").addEventListener("change", () => {
+      const query = document.getElementById("filter_status").value.toLowerCase();
+      const cards = document.querySelectorAll(".card");
+
+      cards.forEach(card => {
+        const status = card.dataset.status.toLowerCase();
+
+        card.classList.toggle("d-none", query !== "all" && status !== query);
+      });
+    });
+
+
+    document.querySelectorAll(".transaction").forEach(transaction => {
+      transaction.addEventListener("click", () => {
+        function formatDate(dateValue) {
+          const date = dateValue.split(" ")[0];
+
+          const dateObj = new Date(date);
+          const month = dateObj.toLocaleString('en-US', { month: 'long' });
+          const day = String(dateObj.getDate()).padStart(2, '0');
+          const year = dateObj.getFullYear();
+
+          return `${month} ${day}, ${year}`;
+        }
+
+        document.getElementById("book_title").innerText = transaction.dataset.title;
+        document.getElementById("book_author").innerText = transaction.dataset.author;
+        document.getElementById("reserve_date").innerText = formatDate(transaction.dataset.reservedate);
+        document.getElementById("borrow_date").innerText = formatDate(transaction.dataset.borrowdate);
+        document.getElementById("return_date").innerText = formatDate(transaction.dataset.returndate);
+        document.getElementById("due_date").innerText = formatDate(transaction.dataset.duedate);
+
+        document.getElementById("notes").innerText = (transaction.dataset.notes) ? transaction.dataset.notes : "N/A";
+        document.getElementById("fine_amount").innerText = (transaction.dataset.fineamount) ? transaction.dataset.fineamount : "";
+
+        switch (transaction.dataset.status) {
+          case "Reserved": bg_text_color = "bg-warning text-dark"; icon = "bookmark"; break;
+          case "Borrowed": bg_text_color = "bg-success text-white"; icon = "journal-bookmark"; break;
+          case "Overdue": bg_text_color = "bg-danger text-white"; icon = "exclamation-triangle"; break;
+          case "Returned": bg_text_color = "bg-primary text-white"; icon = "check-circle"; break;
+          case "Cancelled": bg_text_color = "bg-secondary text-white"; icon = "x-circle"; break;
+        }
+
+        document.getElementById("status").innerHTML = 
+          `<span class="badge ${bg_text_color} align-middle px-3 py-2">
+            <i class="bi bi-${icon}"></i> 
+            ${transaction.dataset.status} 
+          </span>`
+
+        const modal = new bootstrap.Modal(document.getElementById("show_transaction_information"));
+        modal.show();
+      })
+    })
     
     document.querySelectorAll(".edit-button").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -317,6 +853,9 @@
         modal.show();
       });
     });
+
+    const editBorrowDate = document.getElementById("edit_borrow_date");
+    const editReturnDate = document.getElementById("edit_return_date");
 
     editBorrowDate.addEventListener("change", () => {
       if (editBorrowDate.value) {

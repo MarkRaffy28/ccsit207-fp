@@ -39,3 +39,14 @@ requiredFields.forEach(field => {
   asterisk.classList.add('required-asterisk');
   label.appendChild(asterisk);
 });
+
+
+function runFinesCalculator() {
+  fetch("fines_calculator.php")
+  .then(data => console.log("Fines updated:", data))
+  .catch(err => console.error("Error:", err));
+}
+
+runFinesCalculator();
+setInterval(runFinesCalculator, 5 * 60 * 1000);
+

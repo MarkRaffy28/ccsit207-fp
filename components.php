@@ -52,26 +52,62 @@
                 <a class="nav-link <?= ($pageName == "reserve_book") ? "active" : "" ?> fw-bold" href="reserve_book.php">Reserve Book</a>
               </li>
               <li class="nav-item <?= (!isset($_SESSION["id"])) ? "d-none" : "" ?>">
-                <a class="nav-link <?= ($pageName == "transactions") ? "active" : "" ?> fw-bold" href="transactions.php">Transactions</a>
+                <a class="nav-link position-relative <?= ($pageName == "transactions") ? "active" : "" ?> fw-bold" href="transactions.php">
+                  Transactions
+                  <?php
+                    global $conn;
+
+                    if (isset($_SESSION["id"])) {
+                      $user_id = $_SESSION["id"];
+                      $overdue_notif_result = $conn->query("SELECT COUNT(id) FROM transactions WHERE status = 'Overdue' AND user_id = $user_id");
+                      $overdue_notif_count = $overdue_notif_result->fetch_row()[0]; 
+                    }
+                    
+                    if ($overdue_notif_count > 0) {
+                      echo "<span class='badge bg-danger rounded-pill position-absolute top-75 start-100 translate-middle fs-7'>
+                            $overdue_notif_count
+                          </span>";
+                    }
+                  ?>
+                </a>
               </li>
               <li class="nav-item <?= (!isset($_SESSION["id"])) ? "d-none" : "" ?>">
-                <a class="nav-link position-relative <?= ($pageName == 'notifications') ? 'active' : '' ?> fw-bold" href="notifications.php">
-                    <?php
-                      global $conn;
+                <a class="nav-link position-relative <?= ($pageName == "fines") ? "active" : "" ?> fw-bold" href="fines.php">
+                  Fines
+                  <?php
+                    global $conn;
 
-                      $notification_count = 0;
-                      if (isset($_SESSION["id"])) {
-                        $user_id = $_SESSION["id"];
-                        $result = $conn->query("SELECT COUNT(id) FROM book_notifications WHERE user_id = $user_id AND is_read = 0");
-                        $notification_count = $result->fetch_row()[0];
-                      }
-                    ?>
-                    Notifications
-                    <?php if ($notification_count > 0): ?>
-                      <span class="badge bg-danger rounded-pill position-absolute top-75 start-100 translate-middle fs-7">
-                        <?= $notification_count ?>
-                      </span>
-                    <?php endif; ?>
+                    if (isset($_SESSION["id"])) {
+                      $user_id = $_SESSION["id"];
+                      $unpaid_count_result = $conn->query("SELECT COUNT(f.id) FROM fines f JOIN transactions t ON f.transaction_id = t.id WHERE t.user_id = $user_id AND f.status = 'Unpaid'");
+                      $unpaid_count = $unpaid_count_result->fetch_row()[0]; 
+                    }
+                    
+                    if ($unpaid_count > 0) {
+                      echo "<span class='badge bg-danger rounded-pill position-absolute top-75 start-100 translate-middle fs-7'>
+                            $unpaid_count
+                          </span>";
+                    }
+                  ?>
+                </a>
+              </li>
+              <li class="nav-item <?= (!isset($_SESSION["id"])) ? "d-none" : "" ?>">
+                <a class="nav-link position-relative <?= ($pageName == 'book_notifications') ? 'active' : '' ?> fw-bold" href="book_notifications.php">
+                  Book Notifications
+                  <?php
+                    $notification_count = 0;
+                    if (isset($_SESSION["id"])) {
+                      $user_id = $_SESSION["id"];
+                      $result = $conn->query("SELECT COUNT(id) FROM book_notifications WHERE user_id = $user_id AND is_read = 0");
+                      $notification_count = $result->fetch_row()[0];
+                    }
+                  
+                    if ($notification_count > 0) {
+                    echo "<span class='badge bg-danger rounded-pill position-absolute top-75 start-100 translate-middle fs-7'>
+                      $notification_count
+                    </span>";
+                    }
+                  ?>
                 </a>
               </li>
               <li class="nav-item <?= (!isset($_SESSION["id"])) ? "d-none" : "" ?>">
@@ -99,7 +135,7 @@
           <div class="row">
             <div class="col-md-4 mb-3">
               <h5 class="fw-bold">About Us</h5>
-              <p>Our clinic is dedicated to providing quality and compassionate care for every patient.</p>
+              <p>The Library is a vital instrument in the realization of the ISPSC Vision and Mission along instruction, research, extension and production.</p>
             </div>
             <div class="contact-us col-md-4 mb-3">
               <h5 class="fw-bold">Contact Us</h5>
