@@ -134,10 +134,14 @@
         $books->execute();
         $result = $books->get_result();
 
+        if ($result->num_rows == 0) {
+          echo "<p class='text-muted fw-bold'>No books available</p>";
+        }
         while ($row = $result->fetch_assoc()):
       ?>
         <div 
           class="book d-flex flex-column align-items-center"
+          data-id="<?= $row["id"]; ?>"
           data-title="<?= $row["title"]; ?>"
           data-description="<?= $row["description"]; ?>"
           data-author="<?= $row["author"]; ?>"
@@ -174,7 +178,7 @@
               if (isset($_SESSION["id"])): 
                 if ($row["available_copies"] > 0):
             ?>
-                <a href="" class="btn btn-sm btn-success px-5">Borrow</a>
+                <a href="reserve_book.php?book_id=<?= $row["id"]; ?>" class="btn btn-sm btn-success px-5">Reserve</a>
               <?php 
                 else:
                   $notified_sql = $conn->prepare("SELECT id FROM book_notifications WHERE user_id = ? AND book_id = ?");
@@ -226,7 +230,10 @@
     <div class="modal-lg modal-dialog modal-dialog-scrollable modal-dialog-centered">
       <div class="modal-content rounded-4 shadow">
         <div class="modal-header border-0">
-          <h5 class="modal-title w-100 text-center fw-bold">BOOK INFORMATION</h5>
+          <h5 class="modal-title w-100 text-center fw-bold">
+            BOOK INFORMATION
+            <a id="view_full_link" class="btn btn-sm btn-success ms-2 py-0">View Full</a>
+          </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>     
         <div class="modal-body text-center">
@@ -235,9 +242,9 @@
               <img id="book_image" src="" alt="Book Image" class="img-fluid rounded shadow-sm mx-auto mb-3">
               <div>
                 <?php if (isset($_SESSION["id"])): ?>
-                  <a href="" class="btn btn-sm btn-success px-5">Borrow</a>
+                  <a id="reserve_link" class="btn btn-sm btn-success px-5">Reserve</a>
                 <?php else: ?>
-                  <button class="btn btn-sm btn-success px-5" data-bs-toggle="modal" data-bs-target="#login-prompt">Borrow</button>
+                  <button class="btn btn-sm btn-success px-5" data-bs-toggle="modal" data-bs-target="#login-prompt">Reserve</button>
                 <?php endif; ?>
               </div>
             </div>
@@ -331,6 +338,8 @@
 
     document.querySelectorAll(".book").forEach(book => {
       book.addEventListener("click", () => {
+        document.getElementById("reserve_link").href = "reserve_book.php?book_id=" + book.dataset.id;
+        document.getElementById("view_full_link").href = "book_information.php?book_id=" + book.dataset.id;
         document.getElementById("title").innerText = book.dataset.title;
         document.getElementById("description").innerText = book.dataset.description;
         document.getElementById("author").innerText = book.dataset.author;

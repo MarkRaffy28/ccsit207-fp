@@ -102,6 +102,7 @@
       $edit_user_id = test_input($_POST["edit_user_id"]);
       $edit_major = test_input($_POST["edit_major"]);
       $edit_strand = test_input($_POST["edit_strand"]);
+      $edit_year_section = test_input($_POST["edit_year_section"]);
       $edit_birth_date = test_input($_POST["edit_birth_date"]);
       $edit_contact_number = test_input($_POST["edit_contact_number"]);
       $edit_email_address = test_input($_POST["edit_email_address"]);

@@ -56,6 +56,7 @@
 
   $stmt = $conn->prepare("SELECT 
       n.id,
+      b.id AS book_id,
       b.title AS book_title, 
       b.author AS book_author,
       n.is_read,
@@ -89,16 +90,14 @@
         <div class="card-body">
           <div class="row justify-content-between align-items-center">
             <div class="col-md-8">
-              <div class="d-flex justify-content-between align-items-center gap-2">
-                <p class="mb-0 d-inline text-dark"> The book 
-                  <span class="fw-semibold"><?= $book_title ?></span> by 
-                  <span class="fw-semibold"><?= $book_author ?></span> notified from 
-                  <span class="fw-semibold"><?= $notify_date ?> </span>is now available! 
-                </p>
-              </div>
+              <p class="mb-0 d-inline text-dark"> The book 
+                <span class="fw-semibold"><?= $book_title ?></span> by 
+                <span class="fw-semibold"><?= $book_author ?></span> notified from 
+                <span class="fw-semibold"><?= $notify_date ?> </span>is now available! 
+              </p>
             </div>
             <div class="col-md-3 d-flex justify-content-between align-items-center flex-shrink-0 gap-2 mt-2 mt-md-0">
-              <button class="btn btn-sm btn-success">Borrow Now</button>
+              <a href="reserve_book.php?book_id=<?= $row["book_id"]; ?>" class="btn btn-sm btn-success">Reserve Now</a>
               <div class="d-flex gap-3">
                 <form method="POST" class="d-inline">
                   <input type="hidden" name="notification_id" value="<?= $row['id'] ?>">

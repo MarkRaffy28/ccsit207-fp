@@ -49,6 +49,12 @@
                 <a class="nav-link <?= ($pageName == "index") ? "active" : "" ?> fw-bold" href="index.php">Home</a>
               </li>
               <li class="nav-item <?= (!isset($_SESSION["id"])) ? "d-none" : "" ?>">
+                <a class="nav-link <?= ($pageName == "reserve_book") ? "active" : "" ?> fw-bold" href="reserve_book.php">Reserve Book</a>
+              </li>
+              <li class="nav-item <?= (!isset($_SESSION["id"])) ? "d-none" : "" ?>">
+                <a class="nav-link <?= ($pageName == "transactions") ? "active" : "" ?> fw-bold" href="transactions.php">Transactions</a>
+              </li>
+              <li class="nav-item <?= (!isset($_SESSION["id"])) ? "d-none" : "" ?>">
                 <a class="nav-link position-relative <?= ($pageName == 'notifications') ? 'active' : '' ?> fw-bold" href="notifications.php">
                     <?php
                       global $conn;

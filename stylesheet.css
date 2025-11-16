@@ -68,6 +68,44 @@ main {
   min-height: 100vh;
 }
 
+main p {
+  color: black;
+}
+
+.form-control:focus,
+.form-select:hover,
+.form-select:focus,
+input:hover,
+textarea:hover {
+  border-width: 1.5px;
+  border-color:  #8f0002;
+}
+
+input:focus:not(#search_input) {
+  box-shadow: none;
+}
+
+#search_input {
+  color: #8f0002;
+  border-radius: 0.5rem;   
+  transition: all 0.3s ease;  
+}
+
+#search_input:focus,
+#search_input:hover {
+  border-color: #8f0002;
+  box-shadow: 0 0 0 0.25rem rgba(143, 0, 2, 0.25);
+}
+
+textarea:focus,
+.form-select:focus,
+.form-control[readonly]:focus,
+.form-control[readonly]:hover {
+  box-shadow: none !important;
+  border-color: #ced4da;
+  cursor: default;
+}
+
 .fs-7 { font-size: 10px !important; }
 
 #password {
