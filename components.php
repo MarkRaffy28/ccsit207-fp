@@ -15,6 +15,12 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://kit.fontawesome.com/69faae9203.js" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <script>
+      emailjs.init("8jYlGYZ61pqFJoFiN");
+    </script>
+
     
     <link rel="stylesheet" href="stylesheet.css">
     <script defer src="javascript.js"></script>
@@ -111,7 +117,7 @@
                 </a>
               </li>
               <li class="nav-item <?= (!isset($_SESSION["id"])) ? "d-none" : "" ?>">
-                <a class="nav-link <?= ($pageName == "profile") ? "active" : "" ?> fw-bold" href="profile.php">Profile</a>
+                <a class="nav-link <?= ($pageName == "profile_settings") ? "active" : "" ?> fw-bold" href="profile_settings.php">Profile Settings</a>
               </li>
             </ul>
             <?php if(isset($_SESSION["id"])): ?>

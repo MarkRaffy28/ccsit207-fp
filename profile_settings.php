@@ -13,13 +13,15 @@
   include "components.php";
   
   $user_id = $_SESSION["id"];
-  
-  $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
-  $stmt->bind_param("i", $user_id);
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $row = $result->fetch_assoc();
-  
+  $is_email_verified = false;
+  $show_new_password_modal = false;
+
+  $stmt_is_email_verified = $conn->query("SELECT user_id FROM user_email_verifications WHERE user_id = $user_id");
+  $is_email_verified = ($stmt_is_email_verified->num_rows > 0);
+
+  $stmt = $conn->query("SELECT * FROM users WHERE id = $user_id");
+  $row = $stmt->fetch_assoc();
+
   if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset( $_POST["change_profile_picture"])) {
       if (!empty($_FILES["new_profile_picture"]["name"])) {
@@ -149,12 +151,38 @@
       header ("Location: " . $_SERVER["PHP_SELF"]);
       exit;
     }
+
+    if (isset($_POST["verify_email_verified"])) {
+      $stmt = $conn->query("INSERT INTO user_email_verifications(user_id) VALUES($user_id)");
+      $_SESSION["msg"] = ["success","E-mail verified successfully"];
+      header ("Location: " . $_SERVER["PHP_SELF"]);
+      exit;
+    }
+
+    if (isset($_POST["forgot_password_verified"])) {
+      $show_new_password_modal = true;
+    }
+
+    if (isset($_POST["change_password_forgot"])) {
+      $new_password = test_input($_POST["new_password_forgot"]);
+      $hashed_new_password = password_hash($new_password, PASSWORD_DEFAULT);
+
+      $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+      $stmt->bind_param("si", $hashed_new_password, $user_id);
+      
+      if (!$stmt->execute()) {
+        $_SESSION["msg"] = ["danger", "Update error. Please try again later."];
+      }
+      $_SESSION["msg"] = ["success", "Password updated successfully"];
+      header ("Location: " . $_SERVER["PHP_SELF"]);
+      exit;
+    }
   }
   
-  showHeader("Profile")
+  showHeader("Profile Settings")
 ?>
 
-<main class="py-4">
+<main class="px-lg-5 py-4">
   <?= showAlert(); ?>
   <section class="profile row mx-3 mx-lg-5">
     <div class="col-12 col-lg-4">
@@ -167,105 +195,104 @@
           <i class="bi bi-person-circle text-muted"></i>
         <?php endif; ?>
       </div>
-      <div class="d-flex justify-content-center mt-3">
-        <button class="btn btn-sm btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#change_profile_picture"><i class="bi bi-pencil-square"></i> Change Profile Picture</button>
-      </div>
-      
-      <div class="card rounded-4 mt-5">
-        <div class="profile-change-chevron d-flex justify-content-between align-items-center px-3 py-2" type="button" data-bs-toggle="modal" data-bs-target="#change_username">
-          <h6 class="m-0">Change Username</h6>
+    
+      <div class="card rounded-4 mt-4">
+        <div class="profile-change-chevron d-flex align-items-center px-3 py-2" type="button" data-bs-toggle="modal" data-bs-target="#change_profile_picture">
+          <i class="bi bi-camera"></i>
+          <h6 class="m-0 ms-2 me-auto">Change Profile Picture</h6>
           <button class="btn" ><i class="bi bi-chevron-right"></i></button>
         </div>
         <hr class="m-0">
-        <div class="profile-change-chevron d-flex justify-content-between align-items-center px-3 py-2" type="button" data-bs-toggle="modal" data-bs-target="#change_password">
-          <h6 class="m-0">Change Password</h6>
+        <div class="profile-change-chevron d-flex align-items-center px-3 py-2" type="button" data-bs-toggle="modal" data-bs-target="#change_username">
+          <i class="bi bi-person-badge"></i>
+          <h6 class="m-0 ms-2 me-auto">Change Username</h6>
+          <button class="btn" ><i class="bi bi-chevron-right"></i></button>
+        </div>
+        <hr class="m-0">
+        <div class="profile-change-chevron d-flex align-items-center px-3 py-2" type="button" data-bs-toggle="modal" data-bs-target="#change_password">
+          <i class="bi bi-shield-lock"></i>
+          <h6 class="m-0 ms-2 me-auto">Change Password</h6>
+          <button class="btn" ><i class="bi bi-chevron-right"></i></button>
+        </div>
+        <hr class="m-0">
+        <div class="profile-change-chevron d-flex align-items-center px-3 py-2" type="button" data-bs-toggle="modal" data-bs-target="#edit_profile_information">
+          <i class="bi bi-pencil-square"></i>
+          <h6 class="m-0 ms-2 me-auto">Edit Profile Information</h6>
+          <button class="btn" ><i class="bi bi-chevron-right"></i></button>
+        </div>
+        <hr class="m-0">
+        <div class="profile-change-chevron d-flex align-items-center px-3 py-2" type="button" data-bs-toggle="modal" data-bs-target="#delete_account">
+          <i class="bi bi-trash text-danger"></i>
+          <h6 class="m-0 ms-2 me-auto text-danger">Delete Account</h6>
           <button class="btn" ><i class="bi bi-chevron-right"></i></button>
         </div>
       </div>
     </div>  
     
-    <div class="col-12 col-lg-8 mt-5 mt-lg-0">
+    <div class="col-12 col-lg-8 mt-5 mt-lg-0 px-lg-5">
       <h4 class="mb-3 fw-semibold"><i class="fa-solid fa-info-circle"></i> Profile Information</h4>
-      <div class="row mb-2 gx-3 gy-2 gy-lg-0">
-        <div class="col-sm">
-          <label class="form-label">First Name</label>
-          <input type="text" class="form-control" id="first_name" value="<?= htmlspecialchars($row["first_name"]); ?>" readonly>
-        </div>
-        <div class="col-sm">
-          <label class="form-label">Middle Name</label>
-          <input type="text" class="form-control" id="middle_name" value="<?= htmlspecialchars($row["middle_name"]); ?>" readonly>
+      <div class="info-row">
+        <div class="info-label"><i class="bi bi-person me-2"></i> Full Name</div>
+        <div class="info-value"><?= $row["first_name"] . " " . $row["middle_name"] . " " . $row["last_name"] . " " . $row["extension_name"] ?></div>
+      </div>
+      
+      <div class="info-row">
+        <div class="info-label"><i class="bi bi-gender-ambiguous me-2"></i> Gender</div>
+        <div class="info-value"><?= $row["gender"] ?></div>
+      </div>
+      
+      <div class="info-row">
+        <div class="info-label"><i class="bi bi-mortarboard me-2"></i> Program / Position</div>
+        <div class="info-value"><?= $row["program"] ?></div>
+      </div>
+      
+      <div class="info-row">
+        <div class="info-label"><i class="bi bi-card-text me-2"></i> User ID</div>
+        <div class="info-value"><?= $row["user_id"] ?></div>
+      </div>
+      
+      <div class="info-row <?= ($row["major"] == "N/A") ? "d-none" : "" ?>">
+        <div class="info-label"><i class="bi bi-book me-2"></i> Major</div>
+        <div class="info-value"><?= $row["major"] ?></div>
+      </div>
+      
+      <div class="info-row <?= ($row["strand"] == "N/A") ? "d-none" : "" ?>">
+        <div class="info-label"><i class="bi bi-diagram-3 me-2"></i> Strand</div>
+        <div class="info-value"><?= $row["strand"] ?></div>
+      </div>
+      
+      <div class="info-row <?= ($row["year_section"] == "N/A") ? "d-none" : "" ?>">
+        <div class="info-label"><i class="bi bi-calendar-check me-2"></i> Year & Section</div>
+        <div class="info-value"><?= $row["year_section"] ?></div>
+      </div>
+      
+      <div class="info-row">
+        <div class="info-label"><i class="bi bi-cake2 me-2"></i> Birth Date</div>
+        <div class="info-value"><?= date("F j, Y", strtotime($row["birth_date"])) ?></div>
+      </div>
+      
+      <div class="info-row">
+        <div class="info-label"><i class="bi bi-telephone me-2"></i> Contact Number</div>
+        <div class="info-value"><?= $row["contact_number"] ?></div>
+      </div>
+      
+      <div class="info-row">
+        <div class="info-label"><i class="bi bi-envelope me-2"></i> Email Address</div>
+        <div class="info-value">
+          <?php 
+            echo $row["email_address"];
+            if ($is_email_verified):
+          ?>
+            <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Verified</span>
+          <?php else: ?>
+            <button class="otp-verify btn btn-sm btn-success ms-2 py-0 <?= (!$row["email_address"]) ? "d-none" : "" ?>" data-email="<?= $row["email_address"] ?>" data-action="verify_email">Verify</button>
+          <?php endif; ?>
         </div>
       </div>
       
-      <div class="row mb-2 gx-3 gy-2 gy-lg-0">
-        <div class="col-sm">
-          <label class="form-label">Last Name</label>
-          <input type="text" class="form-control" id="last_name" value="<?= htmlspecialchars($row["last_name"]); ?>" readonly>
-        </div>
-        <div class="col-sm">
-          <label class="form-label">Extension Name</label>
-          <input type="text" class="form-control" id="extension_name" value="<?= htmlspecialchars($row["extension_name"]); ?>" readonly>
-        </div>
-      </div>
-      
-      <div class="row mb-2 gx-3 gy-2 gy-lg-0">
-        <div class="col-sm">
-          <label class="form-label">Gender</label>
-          <input type="text" class="form-control" id="gender" value="<?= htmlspecialchars($row["gender"]); ?>" readonly>
-        </div>
-        <div class="col-sm">
-          <label class="form-label">Program (if Student) / Position</label>
-          <input type="text" class="form-control" id="program" value="<?= htmlspecialchars($row['program']); ?>" readonly>
-        </div>
-      </div>
-      
-      <div class="row mb-2 gx-3 gy-2 gy-lg-0">
-        <div class="col-sm">
-          <label class="form-label">User ID</label>
-          <input type="text" class="form-control" id="user_id" value="<?= htmlspecialchars($row["user_id"]); ?>" readonly>
-        </div>
-        <div class="col-sm">
-          <label class="form-label">Major</label>
-          <input type="text" class="form-control" id="major" value="<?= htmlspecialchars($row['major']); ?>" readonly>
-        </div>
-      </div>
-
-      <div class="row mb-2 gx-3 gy-2 gy-lg-0">
-        <div class="col-sm">
-          <label class="form-label">Strand</label>
-          <input type="text" class="form-control" id="strand" value="<?= htmlspecialchars($row["strand"]); ?>" readonly>
-        </div>     
-        <div class="col-sm">
-          <label class="form-label">Year & Section</label>
-          <input type="text" class="form-control" id="year_section" value="<?= htmlspecialchars($row["year_section"]); ?>" readonly>
-        </div>     
-      </div>
-      
-      <div class="row mb-2 gx-3 gy-2 gy-lg-0">
-        <div class="col-sm">
-          <label class="form-label">Birth Date</label>
-          <input type="date" class="form-control" id="birth_date" value="<?= date('Y-m-d', strtotime($row['birth_date'])); ?>" readonly>
-        </div>
-        <div class="col-sm">
-          <label class="form-label">Contact Number</label>
-          <input type="tel" class="form-control" id="contact_number" value="<?= htmlspecialchars($row["contact_number"]); ?>" readonly>
-        </div>
-      </div>
-      
-      <div class="row mb-2 gx-3 gy-2 gy-lg-0">
-        <div class="col-sm">
-          <label class="form-label">Email Address</label>
-          <input type="email" class="form-control" id="email_address" value="<?= htmlspecialchars($row["email_address"]); ?>" readonly>
-        </div>
-        <div class="col-sm">
-          <label class="form-label">Address</label>
-          <textarea rows="1" class="form-control" id="address" readonly> <?= htmlspecialchars($row["address"]); ?> </textarea>
-        </div>
-      </div>
-      
-      <div class="d-flex justify-content-end mt-4">
-        <button class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#edit_profile"><i class="fa-solid fa-pen-to-square"></i> Edit Information</button>
-        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#delete_account"><i class="fa-solid fa-trash"></i> Delete Account</button>
+      <div class="info-row">
+        <div class="info-label"><i class="bi bi-house me-2"></i> Address</div>
+        <div class="info-value"><?= $row["address"] ?></div>
       </div>
     </div>
   </section>
@@ -348,7 +375,10 @@
                 <label for="new_password" class="form-label ps-4">New Password</label>
                 <i class="bi bi-eye fs-4 eye"></i>
               </div>
-            </div>              
+            </div>
+            <div class="d-flex justify-content-end">
+              <a class="otp-verify link" data-email="<?= $row["email_address"] ?>" data-action="forgot_password">Forgot Password?</a>
+            </div>
             <div class="row m-2">
               <div class="d-flex justify-content-center mt-4 mb-2">
                 <button type="button" class="btn btn-md btn-danger rounded-3 px-3 me-3" data-bs-dismiss="modal">Cancel</button>
@@ -360,12 +390,53 @@
       </div>
     </div>
   </div>
+
+  <div class="modal fade" id="new_password_modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable p-4">
+      <div class="modal-content">
+        <div class="modal-header pb-0 border-0">          
+          <h4 class="modal-title w-100 text-center fw-bold m-0 p-0">CHANGE PASSWORD</h4>  
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>      
+        <div class="modal-body">
+          <form method="POST" novalidate>
+            <div class="row mb-2">
+              <div class="col-sm form-floating">
+                <input type="password" class="form-control input-password" id="new_password_forgot" name="new_password_forgot" placeholder="New Password" pattern="[A-Za-z0-9@$!%*?&._]+" required>
+                <label for="new_password_forgot" class="form-label ps-4">New Password</label>
+                <i class="bi bi-eye fs-4 eye"></i>
+              </div>
+            </div>
+            <div class="row m-2">
+              <div class="d-flex justify-content-center mt-4 mb-2">
+                <button type="button" class="btn btn-md btn-danger rounded-3 px-3 me-3" data-bs-dismiss="modal">Cancel</button>
+                <input type="submit" name="change_password_forgot" value="Update" class="btn btn-success">
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <?php if ($show_new_password_modal): ?>
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          document.querySelectorAll('.modal.show').forEach(modalEl => {
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+          });
   
-  <div class="modal fade" id="edit_profile" tabindex="-1">
+          const newPasswordModal = new bootstrap.Modal(document.getElementById("new_password_modal"));
+          newPasswordModal.show();
+        });
+      </script>
+    <?php endif; ?>
+  </div>
+  
+  <div class="modal fade" id="edit_profile_information" tabindex="-1">
     <div class="modal-lg modal-dialog modal-dialog-centered modal-dialog-scrollable p-4">
       <div class="modal-content">
         <div class="modal-header pb-0 border-0">          
-          <h4 class="modal-title w-100 text-center fw-bold m-0 p-0">EDIT INFORMATION</h4>  
+          <h4 class="modal-title w-100 text-center fw-bold m-0 p-0">EDIT PROFILE INFORMATION</h4>  
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>         
         <div class="modal-body">            
@@ -468,7 +539,7 @@
     <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
       <div class="modal-content rounded-4 shadow">
         <div class="modal-header border-0">
-          <h5 class="modal-title w-100 text-center fw-bold">DELETE?</h5>
+          <h5 class="modal-title w-100 text-center fw-bold">DELETE ACCOUNT?</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>     
         <div class="modal-body text-center">
@@ -476,7 +547,7 @@
           <p class="mb-0">Are you sure you want to delete your account? This action cannot be undone.</p>
         </div>      
         <div class="modal-footer border-0 d-flex justify-content-center">
-          <button type="button" class="btn btn-secondary rounded-3 px-4" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-secondary rounded-3 px-4" data-bs-dismiss="modal">Cancel</button>
           <form method="POST">
             <input type="submit" name="delete_account" value="Yes, Delete" class="btn bg-danger text-light rounded-3 px-4">
           </form>
@@ -484,7 +555,148 @@
       </div>
     </div>
   </div>
+
+  <div class="modal fade p-4" id="otp_modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+      <div class="modal-content rounded-4 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title w-100 text-center fw-bold">ENTER VERIFICATION CODE</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>     
+        <div class="modal-body text-center">
+          <form id="otp_form" class="d-flex flex-column align-items-center">
+            <div class="otp-container">
+              <input type="text" maxlength="1" class="form-control otp-input" pattern="\d*" disabled required>
+              <input type="text" maxlength="1" class="form-control otp-input" pattern="\d*" disabled required>
+              <input type="text" maxlength="1" class="form-control otp-input" pattern="\d*" disabled required>
+              <input type="text" maxlength="1" class="form-control otp-input" pattern="\d*" disabled required>
+              <input type="text" maxlength="1" class="form-control otp-input" pattern="\d*" disabled required>
+              <input type="text" maxlength="1" class="form-control otp-input" pattern="\d*" disabled required>
+            </div>
+            <div class="flex">
+              <button id="send_otp" class="btn btn-sm btn-primary">Send OTP</button>
+              <input type="submit" id="submit_otp" class="btn btn-sm btn-success ms-2 d-none">
+            </div>
+          </form>
+          <form method="POST" id="otp_hidden_form" class="d-none">
+            <input type="hidden" id="otp_hidden_input">
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </main>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".otp-verify").forEach(button => {
+      button.addEventListener("click", () => {
+        const email = button.dataset.email;
+        const action = button.dataset.action;
+        
+        document.querySelectorAll('.modal.show').forEach(modalEl => {
+          const modalInstance = bootstrap.Modal.getInstance(modalEl);
+          if (modalInstance) modalInstance.hide();
+        });
+
+        const Modal = new bootstrap.Modal(document.getElementById("otp_modal"));
+        Modal.show();
+
+        const otpInputs = document.querySelectorAll(".otp-input");
+
+        otpInputs.forEach((input, index) => {
+          input.addEventListener("input", (e) => {
+            const value = e.target.value;
+            e.target.value = value.replace(/\D/, '');
+            if (value.length === 1 && index < otpInputs.length - 1) {
+              otpInputs[index + 1].focus();
+            }
+          });
+
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Backspace" && !input.value && index > 0) {
+              otpInputs[index - 1].focus();
+            }
+          });
+        });
+
+        function generateOTP() {
+          const otp = String(Math.floor(100000 + Math.random() * 900000));
+          const expiresAt = Date.now() + 5 * 60 * 1000;
+          localStorage.setItem("otp_code", otp);
+          localStorage.setItem("otp_expiry", expiresAt);
+          return otp;
+        }
+
+        function startTimer(button, remaining = 300) {
+          button.disabled = true;
+          const originalText = button.innerHTML;
+
+          const interval = setInterval(() => {
+            if (remaining <= 0) {
+              button.disabled = false;
+              button.innerHTML = originalText;
+              localStorage.removeItem("otp_expiry");
+              clearInterval(interval);
+            } else {
+              button.innerHTML = `Resend OTP (${remaining}s)`;
+              remaining--;
+            }
+          }, 1000);
+        }
+
+        document.body.addEventListener("click", (e) => {
+          if (e.target && e.target.id === "send_otp") {
+            e.preventDefault();
+            const button = e.target;
+            const otp = generateOTP();
+
+            const serviceID = "service_library";
+            const templateID = "template_verify_email";
+
+            emailjs.send(serviceID, templateID, { email: email, passcode: otp })
+              .then(() => {
+                alert("OTP sent!");
+                startTimer(button);
+                document.getElementById("submit_otp").classList.remove("d-none");
+                otpInputs.forEach(input => {
+                  input.disabled = false;
+                  input.focus();
+                });
+              })
+              .catch((err) => {
+                console.error("EmailJS error:", err);
+                alert("Failed to send OTP. Email may not exist or service misconfigured.");
+              });
+          }
+        });
+
+        document.getElementById("otp_form").addEventListener("submit", (e) => {
+          e.preventDefault();
+
+          const userOTP = Array.from(otpInputs).map(i => i.value).join("");
+          const savedOTP = localStorage.getItem("otp_code");
+          const expiry = Number(localStorage.getItem("otp_expiry"));
+
+          if (Date.now() > expiry) {
+            return alert("OTP has expired. Please resend.");
+          }
+
+          if (userOTP === savedOTP) {
+            localStorage.removeItem("otp_code");
+            localStorage.removeItem("otp_expiry");
+            
+            document.getElementById("otp_hidden_input").name = `${action}_verified`;
+            document.getElementById("otp_hidden_form").submit();
+          } else {
+            alert("Incorrect OTP. Try again.");
+          }
+        });
+
+      });
+    });
+  });
+</script>
 
 <?php
   showFooter();

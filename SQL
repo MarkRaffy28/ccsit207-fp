@@ -94,3 +94,8 @@ CREATE TABLE book_notifications (
   FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
   UNIQUE (user_id, book_id)
 );
+
+CREATE TABLE user_email_verifications (
+  user_id INT PRIMARY KEY,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
