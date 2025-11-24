@@ -1,4 +1,4 @@
-const forms = document.querySelectorAll('form');
+const forms = document.querySelectorAll('form:not(#otp_form)');
 forms.forEach(form => {
   form.addEventListener("submit", event => {
     if (event.submitter && event.submitter.hasAttribute("formnovalidate")) {

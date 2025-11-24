@@ -75,7 +75,10 @@
     <h3 class="fw-semibold"><i class="bi bi-bell"></i> Book Notifications</h3>
   </section>
   <section class="my-3">
-    <?php 
+    <?php
+      if ($result->num_rows == 0) {
+        echo '<p class="text-center text-muted fw-semibold mt-4">No book notifications.</p>';
+      }
       while ($row = $result->fetch_assoc()): 
 
       $book_title = $row["book_title"];

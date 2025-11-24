@@ -15,12 +15,15 @@
   $user_id = $_SESSION["id"];
   $is_email_verified = false;
   $show_new_password_modal = false;
-
-  $stmt_is_email_verified = $conn->query("SELECT user_id FROM user_email_verifications WHERE user_id = $user_id");
-  $is_email_verified = ($stmt_is_email_verified->num_rows > 0);
-
+  
   $stmt = $conn->query("SELECT * FROM users WHERE id = $user_id");
   $row = $stmt->fetch_assoc();
+  $email_address = $row["email_address"];
+
+  $stmt_is_email_verified = $conn->prepare("SELECT user_id FROM user_email_verifications WHERE user_id = ? AND email_address = ?");
+  $stmt_is_email_verified->bind_param("is", $user_id, $email_address);
+  $stmt_is_email_verified->execute();
+  $is_email_verified = ($stmt_is_email_verified->get_result()->num_rows > 0);
 
   if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset( $_POST["change_profile_picture"])) {
@@ -153,7 +156,13 @@
     }
 
     if (isset($_POST["verify_email_verified"])) {
-      $stmt = $conn->query("INSERT INTO user_email_verifications(user_id) VALUES($user_id)");
+      $stmt = $conn->prepare("INSERT INTO user_email_verifications(user_id, email_address) VALUES(?, ?)");
+      $stmt->bind_param("is", $user_id, $email_address);
+
+      if (!$stmt->execute()) {
+        $_SESSION["msg"] = ["danger", "Verification error. Please try again later."];
+        exit;
+      }
       $_SESSION["msg"] = ["success","E-mail verified successfully"];
       header ("Location: " . $_SERVER["PHP_SELF"]);
       exit;
@@ -377,7 +386,11 @@
               </div>
             </div>
             <div class="d-flex justify-content-end">
-              <a class="otp-verify link" data-email="<?= $row["email_address"] ?>" data-action="forgot_password">Forgot Password?</a>
+              <?php if ($is_email_verified): ?>
+                <a class="otp-verify link" data-email="<?= $row["email_address"] ?>" data-action="forgot_password">Forgot Password?</a>
+              <?php elseif (!$is_email_verified): ?>
+                <a class="link" data-bs-toggle="modal" data-bs-target="#verify_prompt">Forgot Password?</a>
+              <?php endif; ?>
             </div>
             <div class="row m-2">
               <div class="d-flex justify-content-center mt-4 mb-2">
@@ -386,6 +399,25 @@
               </div>
             </div>    
           </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade p-5" id="verify_prompt" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+      <div class="modal-content rounded-4 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title text-center fw-bold">EMAIL VERIFICATION REQUIRED!</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>     
+        <div class="modal-body text-center">
+          <i class="fa-solid fa-triangle-exclamation fa-4x text-danger mb-3"></i>
+          <p class="text-dark mb-0">You need to verify your email first to access this feature.</p>
+        </div>      
+        <div class="modal-footer border-0 d-flex justify-content-center">
+          <button type="button" class="btn btn-secondary rounded-3 px-4" data-bs-dismiss="modal">Close</button>
+          <button class="otp-verify btn btn-success px-4" data-email="<?= $row["email_address"] ?>" data-action="verify_email">Verify</button>
         </div>
       </div>
     </div>
@@ -645,10 +677,37 @@
           }, 1000);
         }
 
+        function restoreTimer(button) {
+          const expiry = Number(localStorage.getItem("otp_expiry"));
+          if (!expiry) return;
+
+          const remaining = Math.floor((expiry - Date.now()) / 1000);
+
+          if (remaining > 0) {
+            startTimer(button, remaining);
+
+            const otpInputs = document.querySelectorAll(".otp-input");
+            otpInputs.forEach(input => (input.disabled = false));
+            otpInputs[0].focus();
+
+            document.getElementById("submit_otp").classList.remove("d-none");
+          } else {
+            localStorage.removeItem("otp_expiry");
+            localStorage.removeItem("otp_code");
+          }
+        }
+        restoreTimer(document.getElementById("send_otp"));
+
         document.body.addEventListener("click", (e) => {
           if (e.target && e.target.id === "send_otp") {
             e.preventDefault();
             const button = e.target;
+
+            if (button.dataset.locked === "true") return;
+            button.dataset.locked = "true";
+            button.disabled = true;
+            button.innerHTML = "Sending...";
+
             const otp = generateOTP();
 
             const serviceID = "service_library";
@@ -667,6 +726,9 @@
               .catch((err) => {
                 console.error("EmailJS error:", err);
                 alert("Failed to send OTP. Email may not exist or service misconfigured.");
+                button.dataset.locked = "false";
+                button.disabled = false;
+                button.innerHTML = "Send OTP";
               });
           }
         });
