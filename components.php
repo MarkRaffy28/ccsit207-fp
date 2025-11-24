@@ -104,7 +104,10 @@
                     $notification_count = 0;
                     if (isset($_SESSION["id"])) {
                       $user_id = $_SESSION["id"];
-                      $result = $conn->query("SELECT COUNT(id) FROM book_notifications WHERE user_id = $user_id AND is_read = 0");
+                      $result = $conn->query("SELECT COUNT(n.id) 
+                        FROM book_notifications N 
+                        JOIN books b ON n.book_id = b.id 
+                        WHERE b.available_copies > 0 AND n.user_id = $user_id AND is_read = 0");
                       $notification_count = $result->fetch_row()[0];
                     }
                   

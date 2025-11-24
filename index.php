@@ -6,7 +6,7 @@
 
   if (isset($_POST['like_book_id']) && isset($_SESSION['id'])) {
     $user_id = $_SESSION['id'];
-    $book_id = test_input($_POST['book_id']);
+    $book_id = test_input($_POST['like_book_id']);
 
     $stmt = $conn->prepare("SELECT id FROM liked_books WHERE user_id = ? AND book_id = ?");
     $stmt->bind_param("ii", $user_id, $book_id);
