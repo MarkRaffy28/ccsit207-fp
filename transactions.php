@@ -113,7 +113,7 @@
       </div>
     </div>
     <div class=" px-lg-6">
-      <ul class="nav nav-pills mt-4 border-bottom border-primary" role="tablist">
+      <ul class="nav nav-pills mt-4 border-bottom border-primary" id="transactions_tab" role="tablist">
         <li class="nav-item">
           <button class="nav-link active rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#reserved" type="button">Reserved</button>
         </li>
@@ -140,6 +140,21 @@
         </li>
         <li class="nav-item">
           <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#cancelled" type="button">Cancelled</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0 position-relative" data-bs-toggle="tab" data-bs-target="#lost" type="button">
+            Lost
+            <?php
+              $lost_notif_result = $conn->query("SELECT COUNT(id) FROM transactions WHERE status = 'Lost' AND user_id = $user_id");
+              $lost_notif_count = $lost_notif_result->fetch_row()[0]; 
+  
+              if ($lost_notif_count > 0) {
+                echo "<span class='badge bg-danger rounded-pill position-absolute top-75 start-100 translate-middle fs-7'>
+                      $lost_notif_count
+                    </span>";
+              }
+            ?>
+          </button>
         </li>
         <li class="nav-item">
           <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#history" type="button">History</button>
@@ -187,7 +202,7 @@
                     <div class="col-md-5">
                       <div class="d-flex justify-content-between align-items-center gap-2">
                         <h6 class="mb-0 fw-normal"> 
-                          <a href="book_information.php?book_id=<?= $reserved_row["book_id"]; ?>" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                          <a href="book_information.php?book_id=<?= $reserved_row["book_id"]; ?>&source=transactions&tab=reserved" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
                             <?= $reserved_row["title"] ?> 
                           </a>
                           by
@@ -271,7 +286,7 @@
                     <div class="col-md-6">
                       <div class="d-flex justify-content-between align-items-center gap-2">
                         <h6 class="mb-0 fw-normal"> 
-                          <a href="book_information.php?book_id=<?= $borrowed_row["book_id"]; ?>" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                          <a href="book_information.php?book_id=<?= $borrowed_row["book_id"]; ?>&source=transactions&tab=borrowed" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
                             <?= $borrowed_row["title"] ?> 
                           </a>
                           by
@@ -338,7 +353,7 @@
                     <div class="col-md-6">
                       <div class="d-flex justify-content-between align-items-center gap-2">
                         <h6 class="mb-0 fw-normal"> 
-                          <a href="book_information.php?book_id=<?= $returned_row["book_id"]; ?>" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                          <a href="book_information.php?book_id=<?= $returned_row["book_id"]; ?>&source=transactions&tab=returned" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
                             <?= $returned_row["title"] ?> 
                           </a>
                           by
@@ -410,7 +425,7 @@
                     <div class="col-md-4">
                       <div class="d-flex justify-content-between align-items-center gap-2">
                         <h6 class="mb-0 fw-normal"> 
-                          <a href="book_information.php?book_id=<?= $overdue_row["book_id"]; ?>" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                          <a href="book_information.php?book_id=<?= $overdue_row["book_id"]; ?>&source=transactions&tab=overdue" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
                             <?= $overdue_row["title"] ?> 
                           </a>
                           by
@@ -485,7 +500,7 @@
                     <div class="col-md-6">
                       <div class="d-flex justify-content-between align-items-center gap-2">
                         <h6 class="mb-0 fw-normal"> 
-                          <a href="book_information.php?book_id=<?= $cancelled_row["book_id"]; ?>" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                          <a href="book_information.php?book_id=<?= $cancelled_row["book_id"]; ?>&source=transactions&tab=Cancelled" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
                             <?= $cancelled_row["title"] ?> 
                           </a>
                           by
@@ -497,6 +512,87 @@
                       <small class="text-muted text-start">
                         <span class="d-block"> 
                           Reserve Date: <span class="fw-semibold"><?= $reserve_date ?></span> 
+                        </span>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+            </div>
+        <?php
+          endwhile;
+        ?>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="lost" role="tabpanel">
+      <h5 class="fw-semibold text-center"><i class="bi bi-question-circle-fill"></i> Lost Book(s)</h5>
+      <div class="container my-4">
+        <?php
+          $stmt_show_lost = $conn->prepare("SELECT 
+              t.*,
+              t.fine_amount,
+              b.id AS book_id,
+              b.title,
+              b.author
+            FROM transactions t
+            JOIN books b ON t.book_id = b.id
+            WHERE t.user_id = ? AND status = 'Lost'");
+          $stmt_show_lost->bind_param("i", $_SESSION["id"]);
+          $stmt_show_lost->execute();
+          $lost_result = $stmt_show_lost->get_result();
+          
+          if ($lost_result->num_rows == 0) {
+            echo '<p class="text-center text-muted fw-semibold mt-4">No transaction available.</p>';
+          }
+          while ($lost_row = $lost_result->fetch_assoc()):
+            $reserve_date = date("F j, Y", strtotime($lost_row["reserve_date"]));
+            $return_date = date("F j, Y", strtotime($lost_row["return_date"]));
+            $lost_id = $lost_row["id"];
+        ?>
+            <div class="card border-1 border-danger shadow-sm rounded-4 mb-3 cursor-pointer"
+              data-title="<?= $lost_row["title"] ?>"
+              data-author="<?= $lost_row["author"] ?>"
+              data-reservedate="<?= $lost_row["reserve_date"] ?>"
+              data-borrowdate="<?= $lost_row["borrow_date"] ?>"
+              data-returndate="<?= $lost_row["return_date"] ?>"
+              data-duedate="<?= $lost_row["due_date"] ?>"
+              data-notes="<?= $lost_row["notes"] ?? ""?>"
+              data-fineamount="<?= $lost_row["fine_amount"] ?>"
+              data-status="<?= $lost_row["status"] ?>"
+              onclick="window.location.href='fines.php'"
+            >
+              <span class="<?= ($row["is_read"] == 0) ? "position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger fs-6": "d-none"; ?>">
+                <i class="bi bi-exclamation"></i>
+              </span>
+                <div class="card-body">
+                  <div class="row justify-content-between align-items-center">
+                    <div class="col-md-4">
+                      <div class="d-flex justify-content-between align-items-center gap-2">
+                        <h6 class="mb-0 fw-normal"> 
+                          <a href="book_information.php?book_id=<?= $lost_row["book_id"]; ?>&source=transactions&tab=lost" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                            <?= $lost_row["title"] ?> 
+                          </a>
+                          by
+                          <span class="fw-semibold">  <?= $lost_row["author"] ?></span>
+                        </h6>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="d-flex justify-content-lg-end align-items-center gap-3 mt-2 mt-lg-0">
+                        <small class='text-muted text-start'>
+                          <span class='d-block'> 
+                            Fine Amount: <span class='fw-semibold'>₱<?= $lost_row["fine_amount"] ?></span> 
+                          </span>
+                        </small>
+                      </div>
+                    </div>
+                    <div class="col-md-4 my-2 my-md-0 d-flex flex-column flex-lg-row justify-content-lg-end gap-lg-3">
+                      <small class="text-muted text-start">
+                        <span class="d-block">
+                          Reserve Date: <span class="fw-bold"><?= $reserve_date ?></span>
+                        </span>
+                        <span class="d-block"> 
+                          Return Date: <span class="fw-semibold"><?= $return_date ?></span> 
                         </span>
                       </small>
                     </div>
@@ -521,6 +617,7 @@
             <option value="Returned">Returned</option>
             <option value="Overdue">Overdue</option>
             <option value="Cancelled">Cancelled</option>
+            <option value="Lost">Lost</option>
           </select>
         </div>
       </h5>
@@ -563,7 +660,7 @@
                     <div class="col-md-4">
                       <div class="d-flex flex-row justify-content-between align-items-center gap-2">
                         <h6 class="mb-0 fw-normal"> 
-                          <a href="book_information.php?book_id=<?= $history_row["book_id"]; ?>" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                          <a href="book_information.php?book_id=<?= $history_row["book_id"]; ?>&source=transactions&tab=history" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
                             <?= $history_row["title"] ?> 
                           </a>
                           by
@@ -575,16 +672,17 @@
                       <?php
                         switch ($history_row["status"]) {
                           case "Reserved": $bg_text_color = "bg-warning text-dark"; $icon = "bookmark"; break;
-                          case "Borrowed": $bg_text_color = "bg-success text-white"; $icon = "journal-bookmark"; break;
+                          case "Borrowed": $bg_text_color = "bg-primary text-light"; $icon = "journal-bookmark"; break;
                           case "Overdue": $bg_text_color = "bg-danger text-white"; $icon = "exclamation-triangle"; break;
-                          case "Returned": $bg_text_color = "bg-primary text-white"; $icon = "check-circle"; break;
+                          case "Returned": $bg_text_color = "bg-success text-white"; $icon = "check-circle"; break;
                           case "Cancelled": $bg_text_color = "bg-secondary text-white"; $icon = "x-circle"; break;
+                          case "Lost": $bg_text_color = "bg-danger text-white"; $icon = "question-circle"; break;
                         }
                         $fine_amount = $history_row["fine_amount"];
                       ?>
                       <div class="d-flex align-items-center gap-3 mt-2 mt-lg-0">
                         <?php
-                          if ($history_row["status"] == "Overdue") {
+                          if ($history_row["status"] == "Overdue" || $history_row["status"] == "Lost") {
                             echo "
                               <small class='text-muted text-start'>
                                 <span class='d-block'> 
@@ -750,13 +848,39 @@
   </div>
 
   <script>
-    document.getElementById("search_input").addEventListener("input", () => {
-      const query = document.getElementById("search_input").value.toLowerCase();
-      const card = document.querySelectorAll(".card.history");
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabFromUrl = urlParams.get("tab");
 
-      card.forEach(card => {
+    if (tabFromUrl) {
+      const triggerEl = document.querySelector(`#transactions_tab button[data-bs-target="#${tabFromUrl}"]`);
+      if (triggerEl) {
+        const tab = new bootstrap.Tab(triggerEl);
+        tab.show();
+      }
+    }
+
+    document.querySelectorAll('#transactions_tab button[data-bs-toggle="tab"]').forEach(button => {
+      button.addEventListener('shown.bs.tab', (event) => {
+        const targetId = event.target.getAttribute('data-bs-target').substring(1);
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('tab', targetId);
+        window.history.replaceState({}, '', newUrl);
+      });
+    });
+
+
+    const searchInput = document.getElementById("search_input");
+    const filterStatus = document.getElementById("filter_status");
+    const cards = document.querySelectorAll(".card.history");
+
+    function filterCards() {
+      const query = searchInput.value.toLowerCase();
+      const statusFilter = filterStatus.value.toLowerCase();
+
+      cards.forEach(card => {
         const dataText = [
           card.dataset.title,
+          card.dataset.author,
           card.dataset.description,
           card.dataset.reservedate,
           card.dataset.borrowdate,
@@ -765,20 +889,17 @@
           card.dataset.status
         ].join(" ").toLowerCase();
 
-        card.classList.toggle("d-none", !(query === "" || dataText.includes(query)));
-      });
-    });
-
-    document.getElementById("filter_status").addEventListener("change", () => {
-      const query = document.getElementById("filter_status").value.toLowerCase();
-      const cards = document.querySelectorAll(".card");
-
-      cards.forEach(card => {
         const status = card.dataset.status.toLowerCase();
 
-        card.classList.toggle("d-none", query !== "all" && status !== query);
+        const matchesSearch = query === "" || dataText.includes(query);
+        const matchesStatus = statusFilter === "all" || status === statusFilter;
+
+        card.classList.toggle("d-none", !(matchesSearch && matchesStatus));
       });
-    });
+    }
+
+    searchInput.addEventListener("input", filterCards);
+    filterStatus.addEventListener("change", filterCards);
 
 
     document.querySelectorAll(".transaction").forEach(transaction => {
@@ -806,11 +927,11 @@
 
         switch (transaction.dataset.status) {
           case "Reserved": bg_text_color = "bg-warning text-dark"; icon = "bookmark"; break;
-          case "Borrowed": bg_text_color = "bg-info text-white"; icon = "journal-bookmark"; break;
+          case "Borrowed": bg_text_color = "bg-primary text-white"; icon = "journal-bookmark"; break;
           case "Overdue": bg_text_color = "bg-danger text-white"; icon = "exclamation-triangle"; break;
-          case "Returned": bg_text_color = "bg-primary text-white"; icon = "check-circle"; break;
+          case "Returned": bg_text_color = "bg-success text-white"; icon = "check-circle"; break;
           case "Cancelled": bg_text_color = "bg-secondary text-white"; icon = "x-circle"; break;
-          case "Completed": bg_text_color = "bg-success text-white"; icon = "check-circle"; break;
+          case "Lost": bg_text_color = "bg-danger text-white"; icon = "question-circle"; break;
         }
 
         document.getElementById("status").innerHTML = 

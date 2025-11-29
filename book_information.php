@@ -93,7 +93,13 @@
             </tr>
           </table>
           <div class="d-flex justify-content-end">
-            <a href="index.php" class="btn btn-danger me-5">Return</a>
+            <?php if (isset($_GET["source"]) && $_GET["source"] == "transactions" && isset($_GET["tab"])): ?>
+              <a href="transactions.php?tab=<?= $_GET["tab"] ?>" class="btn btn-danger me-5">Return</a>
+            <?php elseif (isset($_GET["source"]) && $_GET["source"] == "transactions"): ?>
+              <a href="transactions.php" class="btn btn-danger me-5">Return</a>
+            <?php else: ?>
+              <a href="index.php" class="btn btn-danger me-5">Return</a>
+            <?php endif; ?>
           </div>
         </div>
       </div>

@@ -1,8 +1,8 @@
 <?php
   include("config.php");
 
-  // header("Content-Type: application/json");
-  // ob_start();
+  header("Content-Type: application/json");
+  ob_start();
 
   $sql = "SELECT id, due_date FROM transactions WHERE status = 'Borrowed'";
   $result = $conn->query($sql);
@@ -26,7 +26,7 @@
     }
   }
 
-  // ob_end_clean();
+  ob_end_clean();
 
-  // echo json_encode(["success" => true]);
+  echo json_encode(["success" => true]);
 ?>

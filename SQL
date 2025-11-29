@@ -1,87 +1,87 @@
 CREATE TABLE users (
-id INT AUTO_INCREMENT PRIMARY KEY,
-username VARCHAR(100) NOT NULL UNIQUE,
-password VARCHAR(255) NOT NULL,
-profile_picture LONGBLOB,
-first_name VARCHAR(50) NOT NULL,
-middle_name VARCHAR(50),
-last_name VARCHAR(50) NOT NULL,
-extension_name VARCHAR(10) DEFAULT NULL,
-user_id VARCHAR(50) NOT NULL UNIQUE,
-birth_date DATE NOT NULL,
-gender ENUM('Male', 'Female', 'Other') NOT NULL,
-program VARCHAR(100) NOT NULL,
-major VARCHAR(100) DEFAULT 'N/A',
-strand VARCHAR(100) DEFAULT 'N/A',
-address VARCHAR(255),
-year_section VARCHAR(50) NOT NULL,
-contact_number VARCHAR(20),
-email_address VARCHAR(100) NOT NULL UNIQUE,
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(100) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  profile_picture LONGBLOB,
+  first_name VARCHAR(50) NOT NULL,
+  middle_name VARCHAR(50),
+  last_name VARCHAR(50) NOT NULL,
+  extension_name VARCHAR(10) DEFAULT NULL,
+  user_id VARCHAR(50) NOT NULL UNIQUE,
+  birth_date DATE NOT NULL,
+  gender ENUM('Male', 'Female', 'Other') NOT NULL,
+  program VARCHAR(100) NOT NULL,
+  major VARCHAR(100) DEFAULT 'N/A',
+  strand VARCHAR(100) DEFAULT 'N/A',
+  address VARCHAR(255),
+  year_section VARCHAR(50) NOT NULL,
+  contact_number VARCHAR(20),
+  email_address VARCHAR(100) NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- BOOKS TABLE
 CREATE TABLE books (
-id INT AUTO_INCREMENT PRIMARY KEY,
-image LONGBLOB,
-title VARCHAR(255) NOT NULL,
-description VARCHAR(500) NOT NULL,
-author VARCHAR(255) NOT NULL,
-publisher VARCHAR(255),
-publication_year YEAR,
-isbn VARCHAR(50) UNIQUE,
-genre VARCHAR(100),
-language VARCHAR(50) DEFAULT 'English',
-availability ENUM('Available', 'Reserved', 'Borrowed', 'Lost') DEFAULT 'Available',
-total_copies INT DEFAULT 1,
-available_copies INT DEFAULT 1,
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  image LONGBLOB,
+  title VARCHAR(255) NOT NULL,
+  description VARCHAR(500) NOT NULL,
+  author VARCHAR(255) NOT NULL,
+  publisher VARCHAR(255),
+  publication_year YEAR,
+  isbn VARCHAR(50) UNIQUE,
+  genre VARCHAR(100),
+  language VARCHAR(50) DEFAULT 'English',
+  availability ENUM('Available', 'Unavailable') DEFAULT 'Available',
+  total_copies INT DEFAULT 1,
+  available_copies INT DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- TRANSACTIONS TABLE
 CREATE TABLE transactions (
-id INT AUTO_INCREMENT PRIMARY KEY,
-user_id INT NOT NULL,
-book_id INT NOT NULL,
-reserve_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-borrow_date DATETIME NULL,
-due_date DATETIME NULL,
-return_date DATETIME NULL,
-status ENUM('Reserved', 'Borrowed', 'Returned', 'Cancelled', 'Overdue') DEFAULT 'Reserved',
-fine_amount DECIMAL(10, 2) DEFAULT 0.00,
-notes TEXT NULL,
-FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
-INDEX (user_id),
-INDEX (book_id)
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  book_id INT NOT NULL,
+  reserve_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+  borrow_date DATETIME NULL,
+  due_date DATETIME NULL,
+  return_date DATETIME NULL,
+  status ENUM('Reserved', 'Borrowed', 'Returned', 'Cancelled', 'Overdue', 'Lost') DEFAULT 'Reserved',
+  fine_amount DECIMAL(10, 2) DEFAULT 0.00,
+  notes TEXT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
+  INDEX (user_id),
+  INDEX (book_id)
 );
 
 -- FINES TABLE
 CREATE TABLE fines (
-id INT AUTO_INCREMENT PRIMARY KEY,
-transaction_id INT NOT NULL,
-amount DECIMAL(10, 2) NOT NULL,
-reason VARCHAR(255) NOT NULL,
-status ENUM('Unpaid', 'Paid') DEFAULT 'Unpaid',
-paid_at TIMESTAMP NULL,
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,
-INDEX idx_transaction_id(transaction_id),
-INDEX idx_status(status)
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  transaction_id INT NOT NULL,
+  amount DECIMAL(10, 2) NOT NULL,
+  reason VARCHAR(255) NOT NULL,
+  status ENUM('Unpaid', 'Paid') DEFAULT 'Unpaid',
+  paid_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,
+  INDEX idx_transaction_id(transaction_id),
+  INDEX idx_status(status)
 );
 
 -- LIKED BOOKS TABLE
 CREATE TABLE liked_books (
-id INT AUTO_INCREMENT PRIMARY KEY,
-user_id INT NOT NULL,
-book_id INT NOT NULL,
-liked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
-UNIQUE (user_id, book_id)
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  book_id INT NOT NULL,
+  liked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
+  UNIQUE (user_id, book_id)
 );
 
 CREATE TABLE book_notifications (

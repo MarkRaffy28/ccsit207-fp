@@ -159,18 +159,6 @@
     const borrowDate = document.getElementById("borrow_date")
     const returnDate = document.getElementById("return_date")
 
-    [borrowDate, returnDate].forEach(input => {
-      input.addEventListener("input", () => {
-          const selectedDate = new Date(input.value);
-          const day = selectedDate.getDay(); 
-
-          if(day === 0) { 
-            alert("Sundays are not allowed. Please select another day.");
-            input.value = ''; 
-          }
-      })
-    })
-
     borrowDate.addEventListener("change", () => {
       if (borrowDate.value) {
         returnDate.disabled = false;
@@ -208,6 +196,18 @@
       document.getElementById("reserve_message").innerHTML = `Please return the book on <span class='fw-bold'>${rm} ${rd}, ${ry}</span> or not later than <span class='fw-bold'>${dm} ${dd}, ${dy}</span> to avoid fines.`;
     } 
   });
+
+  [borrowDate, returnDate].forEach(input => {
+      input.addEventListener("input", () => {
+          const selectedDate = new Date(input.value);
+          const day = selectedDate.getDay(); 
+
+          if(day === 0) { 
+            alert("Sundays are not allowed. Please select another day.");
+            input.value = ''; 
+          }
+      })
+    })
   </script>
 </main>
 
