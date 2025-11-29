@@ -4,62 +4,82 @@
   include("config.php");
   include("components.php");
 
-  if (isset($_POST['like_book_id']) && isset($_SESSION['id'])) {
-    $user_id = $_SESSION['id'];
-    $book_id = test_input($_POST['like_book_id']);
+  $is_logged_in = isset($_SESSION["id"]);
+
+  if ($_SERVER["REQUEST_METHOD"] == "POST" && !$is_logged_in) {
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit;
+  }
+
+  if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['like_book_id']) && isset($_SESSION['id'])) {
+      $user_id = $_SESSION['id'];
+      $book_id = test_input($_POST['like_book_id']);
+
+      $stmt = $conn->prepare("SELECT id FROM liked_books WHERE user_id = ? AND book_id = ?");
+      $stmt->bind_param("ii", $user_id, $book_id);
+      $stmt->execute();
+      $result = $stmt->get_result();
+
+      if ($result->num_rows > 0) {
+        $stmt = $conn->prepare("DELETE FROM liked_books WHERE user_id = ? AND book_id = ?");
+        $stmt->bind_param("ii", $user_id, $book_id);
+        $stmt->execute();
+      } else {
+        $stmt = $conn->prepare("INSERT INTO liked_books(user_id, book_id) VALUES (?, ?)");
+        $stmt->bind_param("ii", $user_id, $book_id);
+        $stmt->execute();
+      }
+
+      header("Location: " . $_SERVER['REQUEST_URI']);
+      exit;
+    }
+
+    if (isset($_POST['notify_book_id']) && isset($_SESSION['id'])) {
+      $user_id = $_SESSION['id'];
+      $book_id = test_input($_POST['notify_book_id']);
+
+      $stmt = $conn->prepare("SELECT id FROM book_notifications WHERE user_id = ? AND book_id = ?");
+      $stmt->bind_param("ii", $user_id, $book_id);
+      $stmt->execute();
+      $result = $stmt->get_result();
+
+      if ($result->num_rows > 0) {
+        $stmt = $conn->prepare("DELETE FROM book_notifications WHERE user_id = ? AND book_id = ?");
+        $stmt->bind_param("ii", $user_id, $book_id);
+        $stmt->execute();
+
+        $_SESSION["msg"] = ["success", "You will not be notified when the book is available!"];
+        header("Location: " . $_SERVER['REQUEST_URI']);
+        exit;
+      } else {
+        $stmt = $conn->prepare("INSERT INTO book_notifications(user_id, book_id) VALUES (?, ?)");
+        $stmt->bind_param("ii", $user_id, $book_id);
+        $stmt->execute();
+        
+        $_SESSION["msg"] = ["success", "You will be notified when the book is available!"];
+        header("Location: " . $_SERVER['REQUEST_URI']);
+        exit;
+      }
+    }
+  }
+
+  function isBookLiked($user_id, $book_id) {
+    global $conn;
 
     $stmt = $conn->prepare("SELECT id FROM liked_books WHERE user_id = ? AND book_id = ?");
     $stmt->bind_param("ii", $user_id, $book_id);
     $stmt->execute();
     $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-      $stmt = $conn->prepare("DELETE FROM liked_books WHERE user_id = ? AND book_id = ?");
-      $stmt->bind_param("ii", $user_id, $book_id);
-      $stmt->execute();
-    } else {
-      $stmt = $conn->prepare("INSERT INTO liked_books(user_id, book_id) VALUES (?, ?)");
-      $stmt->bind_param("ii", $user_id, $book_id);
-      $stmt->execute();
-    }
-
-    header("Location: " . $_SERVER['PHP_SELF']);
-    exit;
-  }
-
-  if (isset($_POST['notify_book_id']) && isset($_SESSION['id'])) {
-    $user_id = $_SESSION['id'];
-    $book_id = test_input($_POST['notify_book_id']);
-
-    $stmt = $conn->prepare("SELECT id FROM book_notifications WHERE user_id = ? AND book_id = ?");
-    $stmt->bind_param("ii", $user_id, $book_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-      $stmt = $conn->prepare("DELETE FROM book_notifications WHERE user_id = ? AND book_id = ?");
-      $stmt->bind_param("ii", $user_id, $book_id);
-      $stmt->execute();
-
-      $_SESSION["msg"] = ["success", "You will not be notified when the book is available!"];
-      header("Location: " . $_SERVER['PHP_SELF']);
-      exit;
-    } else {
-      $stmt = $conn->prepare("INSERT INTO book_notifications(user_id, book_id) VALUES (?, ?)");
-      $stmt->bind_param("ii", $user_id, $book_id);
-      $stmt->execute();
-      
-      $_SESSION["msg"] = ["success", "You will be notified when the book is available!"];
-      header("Location: " . $_SERVER['PHP_SELF']);
-      exit;
-    }
+    
+    return $result->num_rows > 0;
   }
 
 
   showHeader("Home");
 ?>
 
-<main class="m-3">
+<main class="p-3">
   <?= showAlert(); ?>
   <section>
     <div class="row d-flex justify-content-between align-items-center gap-3">
@@ -108,7 +128,7 @@
         $availability = (isset($_GET['availability']) && $_GET["availability"]=="unavailable") ? "=0" : ">0";
         $user_id = (isset($_SESSION["id"])) ? $_SESSION["id"] : -1;
 
-        $sql = "SELECT * FROM books WHERE available_copies $availability";
+        $sql = "SELECT * FROM books WHERE availability = 'Available' AND available_copies $availability";
 
         switch ($filter) {
           case 'newest': $sql .= " ORDER BY created_at DESC"; break;
@@ -140,7 +160,7 @@
         while ($row = $result->fetch_assoc()):
       ?>
         <div 
-          class="book d-flex flex-column align-items-center"
+          class="book border-0 d-flex flex-column align-items-center"
           data-id="<?= $row["id"]; ?>"
           data-title="<?= $row["title"]; ?>"
           data-description="<?= $row["description"]; ?>"
@@ -156,16 +176,14 @@
           <div class="book-image position-relative">
             <?php if (!empty($row["image"])): ?>
               <img src="data:image/jpeg;base64,<?= base64_encode($row["image"]); ?>" class="rounded">
-              <form method="POST">
-                <?php
-                  $liked_sql = $conn->prepare("SELECT id FROM liked_books WHERE user_id = ? AND book_id = ?");
-                  $liked_sql->bind_param("ii", $_SESSION["id"], $row["id"]);
-                  $liked_sql->execute();
-                  $liked_result = $liked_sql->get_result();
-                ?>
+              <form method="POST" <?= ($is_logged_in) ? "" : "onsubmit='event.preventDefault()'"; ?>>
                 <input type="hidden" name="like_book_id" value="<?= $row['id']; ?>">
                 <button class="btn-like" onclick="event.stopPropagation()">
-                  <i class="bi <?= ($liked_result->num_rows > 0) ? 'bi-heart-fill' : 'bi-heart'; ?>"></i>
+                  <?php if ($is_logged_in): ?>
+                    <i class="bi <?= (isBookLiked($_SESSION["id"], $row["id"]) > 0) ? 'bi-heart-fill' : 'bi-heart'; ?>"></i>
+                  <?php else: ?>
+                    <i class="bi bi-heart" type="button" data-bs-toggle="modal" data-bs-target="#login-prompt"></i>
+                  <?php endif; ?>
                 </button>
               </form>
             <?php else: ?>
@@ -195,7 +213,7 @@
                 endif;
               else: 
             ?>
-              <button class="btn btn-sm btn-success px-5" data-bs-toggle="modal" data-bs-target="#login-prompt" onclick="event.stopPropagation()">Borrow</button>
+              <button class="btn btn-sm btn-success px-5" data-bs-toggle="modal" data-bs-target="#login-prompt" onclick="event.stopPropagation()">Reserve</button>
             <?php endif; ?>
           </div>
         </div>
@@ -338,7 +356,11 @@
 
     document.querySelectorAll(".book").forEach(book => {
       book.addEventListener("click", () => {
-        document.getElementById("reserve_link").href = "reserve_book.php?book_id=" + book.dataset.id;
+        const reserve_link = document.getElementById("reserve_link")
+        if (reserve_link) {
+          reserve_link.href = "reserve_book.php?book_id=" + book.dataset.id;
+        }
+
         document.getElementById("view_full_link").href = "book_information.php?book_id=" + book.dataset.id;
         document.getElementById("title").innerText = book.dataset.title;
         document.getElementById("description").innerText = book.dataset.description;

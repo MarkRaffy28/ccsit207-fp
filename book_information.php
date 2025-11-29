@@ -4,10 +4,12 @@
   include("config.php");
   include("components.php");
 
-  if(!isset($_SESSION["id"]) || !isset($_GET["book_id"])) {
+  $is_logged_in = isset($_SESSION["id"]);
+
+  if(!isset($_GET["book_id"])) {
     header ("Location: index.php");
     exit;
-  } elseif($_SESSION["id"] == "0") {
+  } elseif(isset($_SESSION["id"]) && $_SESSION["id"] == "0") {
     header ("Location: admin_dashboard.php");
     exit;
   }
@@ -21,7 +23,7 @@
     $row = $result->fetch_assoc();
   }
 
-  showHeader("Book Information");
+  showHeader("Book Information");  
 ?>
 
 <main class="m-4" style="min-height: auto !important">
@@ -31,15 +33,15 @@
       <div class="row w-100">
         <div class="col-12 col-lg-4 my-auto text-center">
           <?php if (!empty($row["image"])): ?>
-            <img src="data:image/jpeg;base64,<?= base64_encode($row["image"]); ?>" class="rounded">
+            <img src="data:image/jpeg;base64,<?= base64_encode($row["image"]); ?>" class="shadow-lg rounded" width="250px">
           <?php else: ?>
             <p class="m-auto text-muted">No Image</p>
           <?php endif; ?>
           <div>
             <?php if (isset($_SESSION["id"])): ?>
-              <a id="reserve_link" class="btn btn-sm btn-success mt-3 px-5">Reserve</a>
+              <a href="reserve_book.php?book_id=<?= $row["id"] ?>" class="btn btn-success mt-3 px-5">Reserve</a>
             <?php else: ?>
-              <button class="btn btn-sm btn-success px-5" data-bs-toggle="modal" data-bs-target="#login-prompt">Reserve</button>
+              <button class="btn btn-success mt-3 px-5" data-bs-toggle="modal" data-bs-target="#login-prompt">Reserve</button>
             <?php endif; ?>
           </div>
         </div>
@@ -90,6 +92,9 @@
               <td> <?= date("F j, Y - h:i A", strtotime($row["created_at"])) ?> </td>
             </tr>
           </table>
+          <div class="d-flex justify-content-end">
+            <a href="index.php" class="btn btn-danger me-5">Return</a>
+          </div>
         </div>
       </div>
     <?php else: ?>
@@ -101,6 +106,25 @@
       </div>
     <?php endif; ?>
   </section>
+
+  <div class="modal fade p-5" id="login-prompt" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+      <div class="modal-content rounded-4 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title text-center fw-bold">LOGIN REQUIRED!</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>     
+        <div class="modal-body text-center">
+          <i class="fa-solid fa-user-lock fa-3x text-danger mb-3"></i>
+          <p class="text-dark mb-0">You need to log in to access this feature.</p>
+        </div>      
+        <div class="modal-footer border-0 d-flex justify-content-center">
+          <button type="button" class="btn btn-secondary rounded-3 px-4" data-bs-dismiss="modal">Close</button>
+          <a href="login.php" class="btn bg-success text-light rounded-3 px-4">Log In</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </main>
 
 <?php

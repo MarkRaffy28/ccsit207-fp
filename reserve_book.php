@@ -72,14 +72,11 @@
   showHeader("Reserve Book");
 ?>
 
-<main class="m-4">
+<main class="p-4">
   <?= showAlert(); ?>
-  <section class="my-3">
-    <h3 class="fw-semibold"><i class="bi bi-bookmark"></i> Reserve Book</h3>
-  </section>
-
   <section class="mt-4 px-lg-6">
-    <form method="POST" class="mx-md-5 my-md-4 px-md-5" novalidate>
+    <form method="POST" class="card shadow-lg mx-md-5 my-md-4 px-3 px-md-5 py-4" novalidate>
+      <h3 class="fw-semibold text-center mb-4"><i class="bi bi-bookmark"></i> Reserve Book</h3>
       <p id="reserve_message"></p>
       <div class="row mb-2 gx-3 gy-2">
         <div class="col-sm form-floating">
@@ -159,8 +156,20 @@
   </div>
 
   <script>
-    const borrowDate = document.getElementById("borrow_date");
-    const returnDate = document.getElementById("return_date");
+    const borrowDate = document.getElementById("borrow_date")
+    const returnDate = document.getElementById("return_date")
+
+    [borrowDate, returnDate].forEach(input => {
+      input.addEventListener("input", () => {
+          const selectedDate = new Date(input.value);
+          const day = selectedDate.getDay(); 
+
+          if(day === 0) { 
+            alert("Sundays are not allowed. Please select another day.");
+            input.value = ''; 
+          }
+      })
+    })
 
     borrowDate.addEventListener("change", () => {
       if (borrowDate.value) {

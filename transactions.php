@@ -98,10 +98,10 @@
   showHeader("Transactions");
 ?>
 
-<main class="m-4">
+<main class="p-4">
   <?= showAlert(); ?>
   <section class="my-3">
-    <div class="row d-flex justify-content-between align-items-center gy-3">
+    <div class="row d-flex justify-content-between align-items-center gy-3 px-lg-6">
       <h3 class="col-12 col-lg-9 fw-semibold"><i class="bi bi-receipt"></i> Transactions</h3>
       <div class="col-12 col-lg-3">
         <div class="position-relative search-container">
@@ -806,10 +806,11 @@
 
         switch (transaction.dataset.status) {
           case "Reserved": bg_text_color = "bg-warning text-dark"; icon = "bookmark"; break;
-          case "Borrowed": bg_text_color = "bg-success text-white"; icon = "journal-bookmark"; break;
+          case "Borrowed": bg_text_color = "bg-info text-white"; icon = "journal-bookmark"; break;
           case "Overdue": bg_text_color = "bg-danger text-white"; icon = "exclamation-triangle"; break;
           case "Returned": bg_text_color = "bg-primary text-white"; icon = "check-circle"; break;
           case "Cancelled": bg_text_color = "bg-secondary text-white"; icon = "x-circle"; break;
+          case "Completed": bg_text_color = "bg-success text-white"; icon = "check-circle"; break;
         }
 
         document.getElementById("status").innerHTML = 

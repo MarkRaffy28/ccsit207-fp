@@ -389,7 +389,7 @@
               <?php if ($is_email_verified): ?>
                 <a class="otp-verify link" data-email="<?= $row["email_address"] ?>" data-action="forgot_password">Forgot Password?</a>
               <?php elseif (!$is_email_verified): ?>
-                <a class="link" data-bs-toggle="modal" data-bs-target="#verify_prompt">Forgot Password?</a>
+                <a class="link cursor-pointer" data-bs-toggle="modal" data-bs-target="#verify_prompt">Forgot Password?</a>
               <?php endif; ?>
             </div>
             <div class="row m-2">
