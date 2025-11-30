@@ -25,7 +25,18 @@
     $stmt_check_overdue->store_result();
 
     if ($stmt_check_overdue->num_rows > 0) {
-      $_SESSION["msg"] = ["danger", "You cannot reserve a book because you have overdue books. Please return them first."];
+      $_SESSION["msg"] = ["danger", "You cannot reserve a book because you have an overdue book. Please return them first."];
+      header ("Location: " . $_SERVER["PHP_SELF"]);
+      exit;
+    }
+
+    $stmt_check_lost = $conn->prepare("SELECT id FROM transactions WHERE user_id = ? AND status = 'Lost'");
+    $stmt_check_lost->bind_param("i", $user_id);
+    $stmt_check_lost->execute();
+    $stmt_check_lost->store_result();
+
+    if ($stmt_check_lost->num_rows > 0) {
+      $_SESSION["msg"] = ["danger", "You cannot reserve a book because you have a lost book. Please settle them first."];
       header ("Location: " . $_SERVER["PHP_SELF"]);
       exit;
     }

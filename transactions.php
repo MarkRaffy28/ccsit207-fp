@@ -417,9 +417,6 @@
               data-status="<?= $overdue_row["status"] ?>"
               onclick="window.location.href='fines.php'"
             >
-              <span class="<?= ($row["is_read"] == 0) ? "position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger fs-6": "d-none"; ?>">
-                <i class="bi bi-exclamation"></i>
-              </span>
                 <div class="card-body">
                   <div class="row justify-content-between align-items-center">
                     <div class="col-md-4">
@@ -561,9 +558,6 @@
               data-status="<?= $lost_row["status"] ?>"
               onclick="window.location.href='fines.php'"
             >
-              <span class="<?= ($row["is_read"] == 0) ? "position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger fs-6": "d-none"; ?>">
-                <i class="bi bi-exclamation"></i>
-              </span>
                 <div class="card-body">
                   <div class="row justify-content-between align-items-center">
                     <div class="col-md-4">
@@ -605,6 +599,90 @@
       </div>
     </div>
 
+    <div class="tab-pane fade" id="completed" role="tabpanel">
+      <h5 class="fw-semibold text-center"><i class="bi bi-check-square-fill"></i> Completed Book(s)</h5>
+      <div class="container my-4">
+        <?php
+          $stmt_show_completed = $conn->prepare("SELECT 
+              t.*,
+              t.fine_amount,
+              b.id AS book_id,
+              b.title,
+              b.author,
+              f.paid_at AS paid_at
+            FROM transactions t
+            JOIN books b ON t.book_id = b.id
+            LEFT JOIN fines f ON t.id = f.transaction_id
+            WHERE t.user_id = ? AND t.status = 'Completed'");
+          $stmt_show_completed->bind_param("i", $_SESSION["id"]);
+          $stmt_show_completed->execute();
+          $completed_result = $stmt_show_completed->get_result();
+          
+          if ($completed_result->num_rows == 0) {
+            echo '<p class="text-center text-muted fw-semibold mt-4">No transaction available.</p>';
+          }
+          while ($completed_row = $completed_result->fetch_assoc()):
+            $borrow_date = date("F j, Y", strtotime($completed_row["borrow_date"]));
+            $paid_date = date("F j, Y", strtotime($completed_row["paid_at"]));
+            $completed_id = $completed_row["id"];
+        ?>
+            <div class="card border-0 shadow-sm rounded-4 mb-3 cursor-pointer"
+              data-title="<?= $completed_row["title"] ?>"
+              data-author="<?= $completed_row["author"] ?>"
+              data-reservedate="<?= $completed_row["reserve_date"] ?>"
+              data-borrowdate="<?= $completed_row["borrow_date"] ?>"
+              data-returndate="<?= $completed_row["return_date"] ?>"
+              data-duedate="<?= $completed_row["due_date"] ?>"
+              data-returneddate="<?= $completed_row["returned_date"] ?>"
+              data-notes="<?= $completed_row["notes"] ?? ""?>"
+              data-fineamount="<?= $completed_row["fine_amount"] ?>"
+              data-status="<?= $completed_row["status"] ?>"
+              onclick="window.location.href='fines.php?tab=paid'"
+            >
+                <div class="card-body">
+                  <div class="row justify-content-between align-items-center">
+                    <div class="col-md-4">
+                      <div class="d-flex justify-content-between align-items-center gap-2">
+                        <h6 class="mb-0 fw-normal"> 
+                          <a href="book_information.php?book_id=<?= $completed_row["book_id"]; ?>&source=transactions&tab=completed" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                            <?= $completed_row["title"] ?> 
+                          </a>
+                          by
+                          <span class="fw-semibold">  <?= $completed_row["author"] ?></span>
+                        </h6>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="d-flex justify-content-lg-end align-items-center gap-3 mt-2 mt-lg-0">
+                        <small class='text-muted text-start'>
+                          <span class='<?= ($completed_row["notes"] == "") ? "d-none" : "d-block" ?>'> 
+                            Notes: <span class='fw-semibold'><?= $completed_row["notes"] ?></span> 
+                          </span>
+                          <span class='d-block'> 
+                            Fine Amount: <span class='fw-semibold'>₱<?= $completed_row["fine_amount"] ?></span> 
+                          </span>
+                        </small>
+                      </div>
+                    </div>
+                    <div class="col-md-4 my-2 my-md-0 d-flex flex-column flex-lg-row justify-content-lg-end gap-lg-3">
+                      <small class="text-muted text-start">
+                        <span class="d-block">
+                          Borrow Date: <span class="fw-bold"><?= $borrow_date ?></span>
+                        </span>
+                        <span class="d-block"> 
+                          Paid On: <span class="fw-semibold"><?= $paid_date ?></span> 
+                        </span>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+            </div>
+        <?php
+          endwhile;
+        ?>
+      </div>
+    </div>
+
     <div class="tab-pane fade" id="history" role="tabpanel">
       <h5 class="fw-semibold text-center d-flex justify-content-center align-items-center gap-3">
         <i class="bi bi-hourglass-split"></i> History
@@ -631,6 +709,7 @@
               b.author
             FROM transactions t
             JOIN books b ON t.book_id = b.id
+            LEFT JOIN fines f ON t.id = f.transaction_id
             WHERE t.user_id = ?
             ORDER BY id DESC");
           $stmt_show_history->bind_param("i", $_SESSION["id"]);
@@ -643,6 +722,22 @@
           while ($history_row = $history_result->fetch_assoc()):
             $borrow_date = date("F j, Y", strtotime($history_row["borrow_date"]));
             $return_date = date("F j, Y", strtotime($history_row["return_date"]));
+            $due_date = date("F j, Y", strtotime($history_row["due_date"]));
+            $returned_date = !empty($history_row["returned_date"]) 
+              ? date("F j, Y", strtotime($history_row["returned_date"])) 
+              : null;
+
+            $cancellation_date = !empty($history_row["cancellation_date"]) 
+              ? date("F j, Y", strtotime($history_row["cancellation_date"])) 
+              : null;
+
+            $completion_date = !empty($history_row["completion_date"]) 
+              ? date("F j, Y", strtotime($history_row["completion_date"])) 
+              : null;
+
+            $paid_date = !empty($history_row["paid_at"]) 
+              ? date("F j, Y", strtotime($history_row["paid_at"])) 
+              : null;
         ?>
             <div class="card history transaction border-0 shadow-sm rounded-4 mb-3 cursor-pointer"
               data-title="<?= $history_row["title"] ?>"
