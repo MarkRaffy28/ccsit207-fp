@@ -69,7 +69,7 @@
   showHeader("Book Notifications");  
 ?>
 
-<main class="m-4">
+<main class="p-4">
   <?= showAlert(); ?>
   <section>
     <h3 class="fw-semibold"><i class="bi bi-bell"></i> Book Notifications</h3>

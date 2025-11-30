@@ -41,12 +41,12 @@ requiredFields.forEach(field => {
 });
 
 
-function runFinesCalculator() {
-  fetch("fines_calculator.php")
+function runBackgroundPHP() {
+  fetch("background.php")
   .then(data => console.log("Fines updated:", data))
   .catch(err => console.error("Error:", err));
 }
 
-runFinesCalculator();
-setInterval(runFinesCalculator, 5 * 60 * 1000);
+runBackgroundPHP();
+setInterval(runBackgroundPHP, 5 * 60 * 1000);
 
