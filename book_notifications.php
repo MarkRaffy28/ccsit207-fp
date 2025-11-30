@@ -80,7 +80,7 @@
         echo '<p class="text-center text-muted fw-semibold mt-4">No book notifications.</p>';
       }
       while ($row = $result->fetch_assoc()): 
-
+      $book_id = $row["book_id"];
       $book_title = $row["book_title"];
       $book_author = $row["book_author"];
       $notify_date = date("F j, Y", strtotime($row["notify_date"]));
@@ -93,7 +93,9 @@
           <div class="row justify-content-between align-items-center">
             <div class="col-md-8">
               <p class="mb-0 d-inline text-dark"> The book 
-                <span class="fw-semibold"><?= $book_title ?></span> by 
+                <a href="book_information.php?book_id=<?= $book_id ?>&source=book_notifications" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                  <?= $book_title ?> 
+                </a> by 
                 <span class="fw-semibold"><?= $book_author ?></span> notified from 
                 <span class="fw-semibold"><?= $notify_date ?> </span>is now available! 
               </p>

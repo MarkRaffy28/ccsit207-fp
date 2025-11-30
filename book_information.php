@@ -93,17 +93,18 @@
             </tr>
           </table>
           <div class="d-flex justify-content-end">
-            <?php if (isset($_GET["source"]) && $_GET["source"] == "transactions" && isset($_GET["tab"])): ?>
-              <a href="transactions.php?tab=<?= $_GET["tab"] ?>" class="btn btn-danger me-5">Return</a>
-            <?php elseif (isset($_GET["source"]) && $_GET["source"] == "transactions"): ?>
-              <a href="transactions.php" class="btn btn-danger me-5">Return</a>
-            <?php elseif (isset($_GET["source"]) && $_GET["source"] == "fines" && isset($_GET["tab"])): ?>
-              <a href="fines.php?tab=<?= $_GET["tab"] ?>" class="btn btn-danger me-5">Return</a>
-            <?php elseif (isset($_GET["source"]) && $_GET["source"] == "fines"): ?>
-              <a href="fines.php" class="btn btn-danger me-5">Return</a>
-            <?php else: ?>
-              <a href="index.php" class="btn btn-danger me-5">Return</a>
-            <?php endif; ?>
+            <?php 
+              $source = $_GET['source'] ?? '';
+              $tab = $_GET['tab'] ?? '';
+
+              switch ($source) {
+                case 'transactions': $url = 'transactions.php' . ($tab ? "?tab=$tab" : ''); break;
+                case 'fines': $url = 'fines.php' . ($tab ? "?tab=$tab" : ''); break;
+                case 'book_notifications': $url = 'book_notifications.php'; break;
+                default: $url = 'index.php'; break;
+              }
+            ?>
+            <a href="<?= $url ?>" class="btn btn-danger me-5">Return</a>
           </div>
         </div>
       </div>

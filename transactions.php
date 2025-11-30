@@ -435,9 +435,6 @@
               data-status="<?= $overdue_row["status"] ?>"
               onclick="window.location.href='fines.php'"
             >
-              <span class="<?= ($row["is_read"] == 0) ? "position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger fs-6": "d-none"; ?>">
-                <i class="bi bi-exclamation"></i>
-              </span>
                 <div class="card-body">
                   <div class="row justify-content-between align-items-center">
                     <div class="col-md-4">
@@ -588,9 +585,6 @@
               data-status="<?= $lost_row["status"] ?>"
               onclick="window.location.href='fines.php'"
             >
-              <span class="<?= ($row["is_read"] == 0) ? "position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger fs-6": "d-none"; ?>">
-                <i class="bi bi-exclamation"></i>
-              </span>
                 <div class="card-body">
                   <div class="row justify-content-between align-items-center">
                     <div class="col-md-4">
@@ -645,7 +639,7 @@
               f.paid_at AS paid_at
             FROM transactions t
             JOIN books b ON t.book_id = b.id
-            JOIN fines f ON t.id = f.transaction_id
+            LEFT JOIN fines f ON t.id = f.transaction_id
             WHERE t.user_id = ? AND t.status = 'Completed'");
           $stmt_show_completed->bind_param("i", $_SESSION["id"]);
           $stmt_show_completed->execute();
@@ -743,7 +737,7 @@
               f.paid_at AS paid_at
             FROM transactions t
             JOIN books b ON t.book_id = b.id
-            LEFT JOIN fines f ON t.book_id = f.transaction_id
+            LEFT JOIN fines f ON t.id = f.transaction_id
             WHERE t.user_id = ?
             ORDER BY id DESC");
           $stmt_show_history->bind_param("i", $_SESSION["id"]);
@@ -768,6 +762,10 @@
 
             $completion_date = !empty($history_row["completion_date"]) 
               ? date("F j, Y", strtotime($history_row["completion_date"])) 
+              : null;
+
+            $paid_date = !empty($history_row["paid_at"]) 
+              ? date("F j, Y", strtotime($history_row["paid_at"])) 
               : null;
         ?>
             <div class="card history transaction border-0 shadow-sm rounded-4 mb-3 cursor-pointer"

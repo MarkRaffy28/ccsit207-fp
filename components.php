@@ -68,7 +68,7 @@
                       $overdue_notif_result = $conn->query("SELECT COUNT(t.id)
                         FROM transactions t
                         JOIN books b ON t.book_id = b.id
-                        WHERE t.user_id = $user_id AND t.status = 'Overdue'");
+                        WHERE t.user_id = $user_id AND t.status = 'Overdue' OR t.status = 'Lost'");
                       $overdue_notif_count = $overdue_notif_result->fetch_row()[0]; 
                     }
                     

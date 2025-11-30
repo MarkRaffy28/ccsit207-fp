@@ -53,7 +53,7 @@
         header("Location: " . $_SERVER['REQUEST_URI']);
         exit;
       } else {
-        $stmt = $conn->prepare("INSERT INTO book_notifications(user_id, book_id, type) VALUES (?, ?, 'Available_Book')");
+        $stmt = $conn->prepare("INSERT INTO book_notifications(user_id, book_id) VALUES (?, ?)");
         $stmt->bind_param("ii", $user_id, $book_id);
         $stmt->execute();
         

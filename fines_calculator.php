@@ -4,7 +4,7 @@
   header("Content-Type: application/json");
   ob_start();
 
-  $sql = "SELECT id, due_date FROM transactions WHERE status = 'Borrowed' AND user_id = $user_id";
+  $sql = "SELECT id, due_date FROM transactions WHERE status = 'Borrowed'";
   $result = $conn->query($sql);
 
   while ($row = $result->fetch_assoc()) {
