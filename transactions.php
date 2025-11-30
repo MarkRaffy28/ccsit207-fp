@@ -77,7 +77,10 @@
     $cancel_id = $_POST["cancel_id"];
     $cancel_book_id = $_POST["cancel_book_id"];
 
-    $stmt_cancel_reservation = $conn->prepare("UPDATE transactions SET status = 'Cancelled' WHERE id = ? AND user_id = ?");
+    $stmt_cancel_reservation = $conn->prepare("UPDATE transactions SET 
+      status = 'Cancelled',
+      cancellation_date = NOW()
+      WHERE id = ? AND user_id = ?");
     $stmt_cancel_reservation->bind_param("ii", $cancel_id, $user_id);
     
     if (!$stmt_cancel_reservation->execute()) {
@@ -100,8 +103,8 @@
 
 <main class="p-4">
   <?= showAlert(); ?>
-  <section class="my-3">
-    <div class="row d-flex justify-content-between align-items-center gy-3 px-lg-6">
+  <section class="my-3 px-lg-6">
+    <div class="row d-flex justify-content-between align-items-center gy-3">
       <h3 class="col-12 col-lg-9 fw-semibold"><i class="bi bi-receipt"></i> Transactions</h3>
       <div class="col-12 col-lg-3">
         <div class="position-relative search-container">
@@ -112,7 +115,7 @@
         </div>
       </div>
     </div>
-    <div class=" px-lg-6">
+    <div>
       <ul class="nav nav-pills mt-4 border-bottom border-primary" id="transactions_tab" role="tablist">
         <li class="nav-item">
           <button class="nav-link active rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#reserved" type="button">Reserved</button>
@@ -157,6 +160,9 @@
           </button>
         </li>
         <li class="nav-item">
+          <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#completed" type="button">Completed</button>
+        </li>
+        <li class="nav-item">
           <button class="nav-link rounded-top-3 rounded-0 rounded-bottom-0" data-bs-toggle="tab" data-bs-target="#history" type="button">History</button>
         </li>
       </ul>
@@ -195,6 +201,9 @@
               data-borrowdate="<?= $reserved_row["borrow_date"] ?>"
               data-returndate="<?= $reserved_row["return_date"] ?>"
               data-duedate="<?= $reserved_row["due_date"] ?>"
+              data-returneddate="<?= $reserved_row["returned_date"] ?>"
+              data-cancellationdate="<?= $reserved_row["cancellation_date"] ?>"
+              data-completiondate="<?= $reserved_row["completion_date"] ?>"
               data-status="<?= $reserved_row["status"] ?>"
             >
                 <div class="card-body">
@@ -279,6 +288,9 @@
               data-borrowdate="<?= $borrowed_row["borrow_date"] ?>"
               data-returndate="<?= $borrowed_row["return_date"] ?>"
               data-duedate="<?= $borrowed_row["due_date"] ?>"
+              data-returneddate="<?= $borrowed_row["returned_date"] ?>"
+              data-cancellationdate="<?= $borrowed_row["cancellation_date"] ?>"
+              data-completiondate="<?= $borrowed_row["completion_date"] ?>"
               data-status="<?= $borrowed_row["status"] ?>"
             >
                 <div class="card-body">
@@ -335,7 +347,7 @@
           }
           while ($returned_row = $returned_result->fetch_assoc()):
             $borrow_date = date("F j, Y", strtotime($returned_row["borrow_date"]));
-            $return_date = date("F j, Y", strtotime($returned_row["return_date"]));
+            $returned_date = date("F j, Y", strtotime($returned_row["returned_date"]));
         ?>
             <div class="card transaction border-0 shadow-sm rounded-4 mb-3 cursor-pointer"
               data-title="<?= $returned_row["title"] ?>"
@@ -344,6 +356,9 @@
               data-borrowdate="<?= $returned_row["borrow_date"] ?>"
               data-returndate="<?= $returned_row["return_date"] ?>"
               data-duedate="<?= $returned_row["due_date"] ?>"
+              data-returneddate="<?= $returned_row["returned_date"] ?>"
+              data-cancellationdate="<?= $returned_row["cancellation_date"] ?>"
+              data-completiondate="<?= $returned_row["completion_date"] ?>"
               data-notes="<?= $returned_row["notes"] ?? ""?>"
               data-fineamount="<?= $returned_row["fine_amount"] ?>"
               data-status="<?= $returned_row["status"] ?>"
@@ -367,7 +382,7 @@
                           Borrow Date: <span class="fw-bold"><?= $borrow_date ?></span>
                         </span>
                         <span class="d-block"> 
-                          Return Date: <span class="fw-semibold"><?= $return_date ?></span> 
+                          Returned Date: <span class="fw-semibold"><?= $returned_date ?></span> 
                         </span>
                       </small>
                     </div>
@@ -412,6 +427,9 @@
               data-borrowdate="<?= $overdue_row["borrow_date"] ?>"
               data-returndate="<?= $overdue_row["return_date"] ?>"
               data-duedate="<?= $overdue_row["due_date"] ?>"
+              data-returneddate="<?= $overdue_row["returned_date"] ?>"
+              data-cancellationdate="<?= $overdue_row["cancellation_date"] ?>"
+              data-completiondate="<?= $overdue_row["completion_date"] ?>"
               data-notes="<?= $overdue_row["notes"] ?? ""?>"
               data-fineamount="<?= $overdue_row["fine_amount"] ?>"
               data-status="<?= $overdue_row["status"] ?>"
@@ -483,14 +501,17 @@
           }
           while ($cancelled_row = $cancelled_result->fetch_assoc()):
             $reserve_date = date("F j, Y", strtotime($cancelled_row["reserve_date"]));
+            $cancellation_date = date("F j, Y", strtotime($cancelled_row["cancellation_date"]));
         ?>
             <div class="card transaction border-0 shadow-sm rounded-4 mb-3 cursor-pointer"
               data-title="<?= $cancelled_row["title"] ?>"
               data-author="<?= $cancelled_row["author"] ?>"
               data-reservedate="<?= $cancelled_row["reserve_date"] ?>"
               data-borrowdate="<?= $cancelled_row["borrow_date"] ?>"
-              data-returndate="<?= $cancelled_row["return_date"] ?>"
+              data-returneddate="<?= $cancelled_row["returned_date"] ?>"
               data-duedate="<?= $cancelled_row["due_date"] ?>"
+              data-cancellationdate="<?= $cancelled_row["cancellation_date"] ?>"
+              data-completiondate="<?= $cancelled_row["completion_date"] ?>"
               data-notes="<?= $cancelled_row["notes"] ?? ""?>"
               data-fineamount="<?= $cancelled_row["fine_amount"] ?>"
               data-status="<?= $cancelled_row["status"] ?>"
@@ -512,6 +533,9 @@
                       <small class="text-muted text-start">
                         <span class="d-block"> 
                           Reserve Date: <span class="fw-semibold"><?= $reserve_date ?></span> 
+                        </span>
+                        <span class="d-block"> 
+                          Cancellation Date: <span class="fw-semibold"><?= $cancellation_date ?></span> 
                         </span>
                       </small>
                     </div>
@@ -545,7 +569,7 @@
             echo '<p class="text-center text-muted fw-semibold mt-4">No transaction available.</p>';
           }
           while ($lost_row = $lost_result->fetch_assoc()):
-            $reserve_date = date("F j, Y", strtotime($lost_row["reserve_date"]));
+            $borrow_date = date("F j, Y", strtotime($lost_row["borrow_date"]));
             $return_date = date("F j, Y", strtotime($lost_row["return_date"]));
             $lost_id = $lost_row["id"];
         ?>
@@ -556,6 +580,9 @@
               data-borrowdate="<?= $lost_row["borrow_date"] ?>"
               data-returndate="<?= $lost_row["return_date"] ?>"
               data-duedate="<?= $lost_row["due_date"] ?>"
+              data-returneddate="<?= $lost_row["returned_date"] ?>"
+              data-cancellationdate="<?= $lost_row["cancellation_date"] ?>"
+              data-completiondate="<?= $lost_row["completion_date"] ?>"
               data-notes="<?= $lost_row["notes"] ?? ""?>"
               data-fineamount="<?= $lost_row["fine_amount"] ?>"
               data-status="<?= $lost_row["status"] ?>"
@@ -589,10 +616,94 @@
                     <div class="col-md-4 my-2 my-md-0 d-flex flex-column flex-lg-row justify-content-lg-end gap-lg-3">
                       <small class="text-muted text-start">
                         <span class="d-block">
-                          Reserve Date: <span class="fw-bold"><?= $reserve_date ?></span>
+                          Borrow Date: <span class="fw-bold"><?= $borrow_date ?></span>
                         </span>
                         <span class="d-block"> 
                           Return Date: <span class="fw-semibold"><?= $return_date ?></span> 
+                        </span>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+            </div>
+        <?php
+          endwhile;
+        ?>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="completed" role="tabpanel">
+      <h5 class="fw-semibold text-center"><i class="bi bi-check-square-fill"></i> Completed Book(s)</h5>
+      <div class="container my-4">
+        <?php
+          $stmt_show_completed = $conn->prepare("SELECT 
+              t.*,
+              t.fine_amount,
+              b.id AS book_id,
+              b.title,
+              b.author,
+              f.paid_at AS paid_at
+            FROM transactions t
+            JOIN books b ON t.book_id = b.id
+            JOIN fines f ON t.id = f.transaction_id
+            WHERE t.user_id = ? AND t.status = 'Completed'");
+          $stmt_show_completed->bind_param("i", $_SESSION["id"]);
+          $stmt_show_completed->execute();
+          $completed_result = $stmt_show_completed->get_result();
+          
+          if ($completed_result->num_rows == 0) {
+            echo '<p class="text-center text-muted fw-semibold mt-4">No transaction available.</p>';
+          }
+          while ($completed_row = $completed_result->fetch_assoc()):
+            $borrow_date = date("F j, Y", strtotime($completed_row["borrow_date"]));
+            $paid_date = date("F j, Y", strtotime($completed_row["paid_at"]));
+            $completed_id = $completed_row["id"];
+        ?>
+            <div class="card border-0 shadow-sm rounded-4 mb-3 cursor-pointer"
+              data-title="<?= $completed_row["title"] ?>"
+              data-author="<?= $completed_row["author"] ?>"
+              data-reservedate="<?= $completed_row["reserve_date"] ?>"
+              data-borrowdate="<?= $completed_row["borrow_date"] ?>"
+              data-returndate="<?= $completed_row["return_date"] ?>"
+              data-duedate="<?= $completed_row["due_date"] ?>"
+              data-returneddate="<?= $completed_row["returned_date"] ?>"
+              data-notes="<?= $completed_row["notes"] ?? ""?>"
+              data-fineamount="<?= $completed_row["fine_amount"] ?>"
+              data-status="<?= $completed_row["status"] ?>"
+              onclick="window.location.href='fines.php?tab=paid'"
+            >
+                <div class="card-body">
+                  <div class="row justify-content-between align-items-center">
+                    <div class="col-md-4">
+                      <div class="d-flex justify-content-between align-items-center gap-2">
+                        <h6 class="mb-0 fw-normal"> 
+                          <a href="book_information.php?book_id=<?= $completed_row["book_id"]; ?>&source=transactions&tab=completed" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                            <?= $completed_row["title"] ?> 
+                          </a>
+                          by
+                          <span class="fw-semibold">  <?= $completed_row["author"] ?></span>
+                        </h6>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="d-flex justify-content-lg-end align-items-center gap-3 mt-2 mt-lg-0">
+                        <small class='text-muted text-start'>
+                          <span class='<?= ($completed_row["notes"] == "") ? "d-none" : "d-block" ?>'> 
+                            Notes: <span class='fw-semibold'><?= $completed_row["notes"] ?></span> 
+                          </span>
+                          <span class='d-block'> 
+                            Fine Amount: <span class='fw-semibold'>₱<?= $completed_row["fine_amount"] ?></span> 
+                          </span>
+                        </small>
+                      </div>
+                    </div>
+                    <div class="col-md-4 my-2 my-md-0 d-flex flex-column flex-lg-row justify-content-lg-end gap-lg-3">
+                      <small class="text-muted text-start">
+                        <span class="d-block">
+                          Borrow Date: <span class="fw-bold"><?= $borrow_date ?></span>
+                        </span>
+                        <span class="d-block"> 
+                          Paid On: <span class="fw-semibold"><?= $paid_date ?></span> 
                         </span>
                       </small>
                     </div>
@@ -628,9 +739,11 @@
               t.fine_amount,
               b.id AS book_id,
               b.title,
-              b.author
+              b.author,
+              f.paid_at AS paid_at
             FROM transactions t
             JOIN books b ON t.book_id = b.id
+            LEFT JOIN fines f ON t.book_id = f.transaction_id
             WHERE t.user_id = ?
             ORDER BY id DESC");
           $stmt_show_history->bind_param("i", $_SESSION["id"]);
@@ -641,8 +754,21 @@
             echo '<p class="text-center text-muted fw-semibold mt-4">No transaction available.</p>';
           }
           while ($history_row = $history_result->fetch_assoc()):
+            $reserve_date = date("F j, Y", strtotime($history_row["reserve_date"]));
             $borrow_date = date("F j, Y", strtotime($history_row["borrow_date"]));
             $return_date = date("F j, Y", strtotime($history_row["return_date"]));
+            $due_date = date("F j, Y", strtotime($history_row["due_date"]));
+            $returned_date = !empty($history_row["returned_date"]) 
+              ? date("F j, Y", strtotime($history_row["returned_date"])) 
+              : null;
+
+            $cancellation_date = !empty($history_row["cancellation_date"]) 
+              ? date("F j, Y", strtotime($history_row["cancellation_date"])) 
+              : null;
+
+            $completion_date = !empty($history_row["completion_date"]) 
+              ? date("F j, Y", strtotime($history_row["completion_date"])) 
+              : null;
         ?>
             <div class="card history transaction border-0 shadow-sm rounded-4 mb-3 cursor-pointer"
               data-title="<?= $history_row["title"] ?>"
@@ -651,6 +777,8 @@
               data-borrowdate="<?= $history_row["borrow_date"] ?>"
               data-returndate="<?= $history_row["return_date"] ?>"
               data-duedate="<?= $history_row["due_date"] ?>"
+              data-cancellationdate="<?= $history_row["cancellation_date"] ?>"
+              data-completiondate="<?= $history_row["completion_date"] ?>"
               data-notes="<?= $history_row["notes"] ?? ""?>"
               data-fineamount="<?= $history_row["fine_amount"] ?>"
               data-status="<?= $history_row["status"] ?>"
@@ -677,12 +805,14 @@
                           case "Returned": $bg_text_color = "bg-success text-white"; $icon = "check-circle"; break;
                           case "Cancelled": $bg_text_color = "bg-secondary text-white"; $icon = "x-circle"; break;
                           case "Lost": $bg_text_color = "bg-danger text-white"; $icon = "question-circle"; break;
+                          case "Completed": $bg_text_color = "bg-success text-white"; $icon = "check-square"; break;
                         }
+                        $notes = $history_row["notes"];
                         $fine_amount = $history_row["fine_amount"];
                       ?>
                       <div class="d-flex align-items-center gap-3 mt-2 mt-lg-0">
                         <?php
-                          if ($history_row["status"] == "Overdue" || $history_row["status"] == "Lost") {
+                          if ($history_row["status"] == "Overdue" || $history_row["status"] == "Lost" || $history_row["status"] == "Completed") {
                             echo "
                               <small class='text-muted text-start'>
                                 <span class='d-block'> 
@@ -698,12 +828,37 @@
                       </div>
                     </div>
                     <div class="col-md-4 my-2 my-md-0 d-flex flex-column flex-lg-row justify-content-lg-end gap-lg-3">
+                      <?php
+                        switch ($history_row["status"]) {
+                          case "Reserved": 
+                            $span1_name = "Borrow Date"; $span1_value = $borrow_date; 
+                            $span2_name = "Return Date"; $span2_value = $return_date; break;
+                          case "Borrowed": 
+                            $span1_name = "Return Date"; $span1_value = $return_date; 
+                            $span2_name = "Due Date"; $span2_value = $due_date; break;
+                          case "Returned": 
+                            $span1_name = "Borrow Date"; $span1_value = $borrow_date; 
+                            $span2_name = "Returned Date"; $span2_value = $returned_date; break;
+                          case "Overdue": 
+                            $span1_name = "Return Date"; $span1_value = $return_date; 
+                            $span2_name = "Due Date"; $span2_value = $due_date; break;
+                          case "Cancelled": 
+                            $span1_name = "Reserve Date"; $span1_value = $reserve_date; 
+                            $span2_name = "Cancellation Date"; $span2_value = $cancellation_date; break;
+                          case "Lost": 
+                            $span1_name = "Borrow Date"; $span1_value = $borrow_date; 
+                            $span2_name = "Return Date"; $span2_value = $return_date; break;
+                          case "Completed": 
+                            $span1_name = "Borrow Date"; $span1_value = $borrow_date; 
+                            $span2_name = "Paid On"; $span2_value = $paid_date; break;
+                        }
+                      ?>
                       <small class="text-muted text-start">
                         <span class="d-block"> 
-                          Borrow Date: <span class="fw-semibold"><?= $borrow_date ?></span> 
+                          <?= $span1_name ?>: <span class="fw-semibold"><?= $span1_value ?></span> 
                         </span>
                         <span class="d-block"> 
-                          Return Date: <span class="fw-semibold"><?= $return_date ?></span> 
+                          <?= $span2_name ?>: <span class="fw-semibold"><?= $span2_value ?></span> 
                         </span>
                       </small>
                     </div>
@@ -750,6 +905,18 @@
             <tr>
               <th>Due Date:</th>
               <td id="due_date"></td>
+            </tr>
+            <tr>
+              <th>Returned Date:</th>
+              <td id="returned_date"></td>
+            </tr>
+            <tr>
+              <th>Cancellation Date:</th>
+              <td id="cancellation_date"></td>
+            </tr>
+            <tr>
+              <th>Completion Date:</th>
+              <td id="completion_date"></td>
             </tr>
             <tr>
               <th>Notes:</th>
@@ -886,7 +1053,11 @@
           card.dataset.borrowdate,
           card.dataset.returndate,
           card.dataset.duedate,
-          card.dataset.status
+          card.dataset.returneddate,
+          card.dataset.cancellationdate,
+          card.dataset.completiondate,
+          card.dataset.status,
+          card.dataset.fineamount
         ].join(" ").toLowerCase();
 
         const status = card.dataset.status.toLowerCase();
@@ -905,6 +1076,9 @@
     document.querySelectorAll(".transaction").forEach(transaction => {
       transaction.addEventListener("click", () => {
         function formatDate(dateValue) {
+          if (!dateValue) {
+            return "N/A";
+          }
           const date = dateValue.split(" ")[0];
 
           const dateObj = new Date(date);
@@ -921,9 +1095,12 @@
         document.getElementById("borrow_date").innerText = formatDate(transaction.dataset.borrowdate);
         document.getElementById("return_date").innerText = formatDate(transaction.dataset.returndate);
         document.getElementById("due_date").innerText = formatDate(transaction.dataset.duedate);
+        document.getElementById("returned_date").innerText = formatDate(transaction.dataset.returneddate);
+        document.getElementById("cancellation_date").innerText = formatDate(transaction.dataset.cancellationdate);
+        document.getElementById("completion_date").innerText = formatDate(transaction.dataset.completiondate);
 
         document.getElementById("notes").innerText = (transaction.dataset.notes) ? transaction.dataset.notes : "N/A";
-        document.getElementById("fine_amount").innerText = (transaction.dataset.fineamount) ? transaction.dataset.fineamount : "";
+        document.getElementById("fine_amount").innerText = (transaction.dataset.fineamount) ? `₱${transaction.dataset.fineamount}` : "";
 
         switch (transaction.dataset.status) {
           case "Reserved": bg_text_color = "bg-warning text-dark"; icon = "bookmark"; break;
@@ -932,6 +1109,7 @@
           case "Returned": bg_text_color = "bg-success text-white"; icon = "check-circle"; break;
           case "Cancelled": bg_text_color = "bg-secondary text-white"; icon = "x-circle"; break;
           case "Lost": bg_text_color = "bg-danger text-white"; icon = "question-circle"; break;
+          case "Completed": bg_text_color = "bg-success text-white"; icon = "check-square"; break;
         }
 
         document.getElementById("status").innerHTML = 

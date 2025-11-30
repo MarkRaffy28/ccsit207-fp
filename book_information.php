@@ -97,6 +97,10 @@
               <a href="transactions.php?tab=<?= $_GET["tab"] ?>" class="btn btn-danger me-5">Return</a>
             <?php elseif (isset($_GET["source"]) && $_GET["source"] == "transactions"): ?>
               <a href="transactions.php" class="btn btn-danger me-5">Return</a>
+            <?php elseif (isset($_GET["source"]) && $_GET["source"] == "fines" && isset($_GET["tab"])): ?>
+              <a href="fines.php?tab=<?= $_GET["tab"] ?>" class="btn btn-danger me-5">Return</a>
+            <?php elseif (isset($_GET["source"]) && $_GET["source"] == "fines"): ?>
+              <a href="fines.php" class="btn btn-danger me-5">Return</a>
             <?php else: ?>
               <a href="index.php" class="btn btn-danger me-5">Return</a>
             <?php endif; ?>

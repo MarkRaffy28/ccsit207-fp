@@ -193,8 +193,8 @@
 
 <main class="px-lg-5 py-4">
   <?= showAlert(); ?>
-  <section class="profile row mx-3 mx-lg-5">
-    <div class="col-12 col-lg-4">
+  <section class="profile row justify-content-center mx-3 mx-lg-5 gap-3">
+    <div class="col-12 col-lg-4 card shadow-lg mb-lg-0 p-3">
       <h4 class="mb-3 fw-semibold"><i class="fa-solid fa-gear"></i> Account Settings</h4>
       <h5 class="text-center mb-3">Hi, <span class="text-success fw-semibold"> <?= htmlspecialchars($row["username"]); ?> </span></h5>
       <div class="col-lg-4 d-flex justify-content-center align-items-center profile-picture mx-auto">
@@ -238,7 +238,7 @@
       </div>
     </div>  
     
-    <div class="col-12 col-lg-8 mt-5 mt-lg-0 px-lg-5">
+    <div class="col-12 col-lg-7 card shadow-lg mt-2 mt-md-0 p-3 px-lg-5">
       <h4 class="mb-3 fw-semibold"><i class="fa-solid fa-info-circle"></i> Profile Information</h4>
       <div class="info-row">
         <div class="info-label"><i class="bi bi-person me-2"></i> Full Name</div>
@@ -303,6 +303,11 @@
         <div class="info-label"><i class="bi bi-house me-2"></i> Address</div>
         <div class="info-value"><?= $row["address"] ?></div>
       </div>
+
+      <div class="info-row">
+        <div class="info-label"><i class="bi bi-shield-lock me-2"></i> Role</div>
+        <div class="info-value"><?= $row["role"] ?></div>
+      </div>
     </div>
   </section>
   
@@ -346,7 +351,7 @@
           <form method="POST" novalidate>
             <div class="row mb-2">
               <div class="col-sm form-floating">
-                <input type="text" class="form-control" id="new_username" name="new_username" placeholder="New Username" pattern="[A-Za-z0-9._]+" required>
+                <input type="text" class="form-control" id="new_username" name="new_username" placeholder="New Username" pattern="[A-Za-z0-9._]+" maxlength="100" required>
                 <label for="new_username" class="form-label ps-4">New Username</label>
               </div>
             </div>
@@ -373,16 +378,19 @@
           <form method="POST" novalidate>
             <div class="row mb-2">
               <div class="col-sm form-floating">
-                <input type="password" class="form-control input-password" id="old_password" name="old_password" placeholder="Old Password" pattern="[A-Za-z0-9@$!%*?&._]+" required>
+                <input type="password" class="form-control input-password" id="old_password" name="old_password" placeholder="Old Password" pattern="[A-Za-z0-9@$!%*?&._]+" maxlength="255" required>
                 <label for="old_password" class="form-label ps-4">Old Password</label>
                 <i class="bi bi-eye fs-4 eye"></i>
               </div>
             </div>        
             <div class="row mb-2">
               <div class="col-sm form-floating">
-                <input type="password" class="form-control input-password" id="new_password" name="new_password" placeholder="New Password" pattern="[A-Za-z0-9@$!%*?&._]+" required>
+                <input type="password" class="form-control input-password" id="new_password" name="new_password" placeholder="New Password" pattern="[A-Za-z0-9@$!%*?&._]+" minlength="8" maxlength="255" required>
                 <label for="new_password" class="form-label ps-4">New Password</label>
                 <i class="bi bi-eye fs-4 eye"></i>
+                <div class="form-text ps-2">
+                  Your input must be minimum of 8 characters.
+                </div>
               </div>
             </div>
             <div class="d-flex justify-content-end">
@@ -434,9 +442,12 @@
           <form method="POST" novalidate>
             <div class="row mb-2">
               <div class="col-sm form-floating">
-                <input type="password" class="form-control input-password" id="new_password_forgot" name="new_password_forgot" placeholder="New Password" pattern="[A-Za-z0-9@$!%*?&._]+" required>
+                <input type="password" class="form-control input-password" id="new_password_forgot" name="new_password_forgot" placeholder="New Password" pattern="[A-Za-z0-9@$!%*?&._]+" minlength="8" maxlength="255" required>
                 <label for="new_password_forgot" class="form-label ps-4">New Password</label>
                 <i class="bi bi-eye fs-4 eye"></i>
+                <div class="form-text ps-2">
+                  Your input must be minimum of 8 characters.
+                </div>
               </div>
             </div>
             <div class="row m-2">
@@ -475,22 +486,22 @@
           <form method="POST" novalidate>
             <div class="row mb-2 gx-3 gy-2">
               <div class="col-sm form-floating">
-                <input type="text" class="form-control" id="edit_first_name" name="edit_first_name" placeholder="First Name" value="<?= htmlspecialchars($row["first_name"]); ?>" required>
+                <input type="text" class="form-control" id="edit_first_name" name="edit_first_name" placeholder="First Name" value="<?= htmlspecialchars($row["first_name"]); ?>" maxlength="50" required>
                 <label for="edit_first_name" class="form-label ps-4">First Name</label>
             </div>
             <div class="col-sm form-floating">
-              <input type="text" class="form-control" id="edit_middle_name" name="edit_middle_name" placeholder="Middle Name" value="<?= htmlspecialchars($row["middle_name"]); ?>" required>
+              <input type="text" class="form-control" id="edit_middle_name" name="edit_middle_name" placeholder="Middle Name" value="<?= htmlspecialchars($row["middle_name"]); ?>" maxlength="50" required>
               <label for="edit_middle_name" class="form-label ps-4">Middle Name</label>
             </div>
           </div>
               
           <div class="row mb-2 gx-3 gy-2">
             <div class="col-sm form-floating">
-              <input type="text" class="form-control" id="edit_last_name" name="edit_last_name" placeholder="Last Name" value="<?= htmlspecialchars($row["last_name"]); ?>" required>
+              <input type="text" class="form-control" id="edit_last_name" name="edit_last_name" placeholder="Last Name" value="<?= htmlspecialchars($row["last_name"]); ?>" maxlength="50" required>
               <label for="edit_last_name" class="form-label ps-4">Last Name</label>
               </div>
               <div class="col-sm form-floating">
-                <input type="text" class="form-control" id="edit_extension_name" name="edit_extension_name" placeholder="Extension Name" value="<?= htmlspecialchars($row["extension_name"]); ?>">
+                <input type="text" class="form-control" id="edit_extension_name" name="edit_extension_name" placeholder="Extension Name" value="<?= htmlspecialchars($row["extension_name"]); ?>" maxlength="10">
                 <label for="edit_extension_name" class="form-label ps-4">Extension Name</label>
               </div>
             </div>
@@ -505,29 +516,29 @@
                 <label for="edit_gender" class="form-label ps-4">Select Gender</label>
               </div>
               <div class="col-sm form-floating">
-                <input type="text" class="form-control" id="edit_program" name="edit_program" placeholder="Program (if student) / Position" value="<?= htmlspecialchars($row['program']); ?>" required>
+                <input type="text" class="form-control" id="edit_program" name="edit_program" placeholder="Program (if student) / Position" value="<?= htmlspecialchars($row['program']); ?>" maxlength="100" required>
                 <label for="edit_program" class="form-label ps-4">Program (if student) / Position</label>
               </div>
             </div>
             
             <div class="row mb-2 gx-3 gy-2 gy-lg-0">
               <div class="col-sm form-floating">
-                <input type="text" class="form-control" id="edit_user_id" name="edit_user_id" placeholder="User Id" value="<?= htmlspecialchars($row["user_id"]); ?>">
+                <input type="text" class="form-control" id="edit_user_id" name="edit_user_id" placeholder="User Id" value="<?= htmlspecialchars($row["user_id"]); ?>" maxlength="50">
                 <label for="edit_user_id" class="form-label ps-4">User ID</label>
               </div>
               <div class="col-sm form-floating">
-                <input type="text" class="form-control" id="edit_major" name="edit_major" placeholder="Major" value="<?= htmlspecialchars($row['major']); ?>">
+                <input type="text" class="form-control" id="edit_major" name="edit_major" placeholder="Major" value="<?= htmlspecialchars($row['major']); ?>" maxlength="100">
                 <label for="edit_major" class="form-label ps-4">Major</label>
               </div>
             </div>
 
             <div class="row mb-2 gx-3 gy-2 gy-lg-0">
               <div class="col-sm form-floating">
-                <input type="text" class="form-control" id="edit_strand" name="edit_strand" placeholder="Strand" value="<?= htmlspecialchars($row["strand"]); ?>">
+                <input type="text" class="form-control" id="edit_strand" name="edit_strand" placeholder="Strand" value="<?= htmlspecialchars($row["strand"]); ?>" maxlength="100">
                 <label for="edit_strand" class="form-label ps-4">Strand</label>
               </div>     
               <div class="col-sm form-floating">
-                <input type="text" class="form-control" id="edit_year_section" name="edit_year_section" placeholder="Year & Section" value="<?= htmlspecialchars($row["year_section"]); ?>">
+                <input type="text" class="form-control" id="edit_year_section" name="edit_year_section" placeholder="Year & Section" value="<?= htmlspecialchars($row["year_section"]); ?>" maxlength="50">
                 <label for="edit_strand" class="form-label ps-4">Year & Section</label>
               </div>     
             </div>
@@ -546,11 +557,11 @@
               
             <div class="row mb-2 gx-3 gy-2">
               <div class="col-sm form-floating">
-                <input type="email" class="form-control" id="edit_email_address" name="edit_email_address" placeholder="E-mail Address" value="<?= htmlspecialchars($row["email_address"]); ?>" required>
+                <input type="email" class="form-control" id="edit_email_address" name="edit_email_address" placeholder="E-mail Address" value="<?= htmlspecialchars($row["email_address"]); ?>" required maxlength="100">
                 <label for="edit_email_address" class="form-label ps-4">E-mail Address</label>
               </div>
               <div class="col-sm form-floating">
-                <textarea class="form-control" id="edit_address" name="edit_address" placeholder="Address" required> <?= htmlspecialchars($row["address"]); ?> </textarea>
+                <textarea class="form-control" id="edit_address" name="edit_address" placeholder="Address" maxlength="255" required> <?= htmlspecialchars($row["address"]); ?> </textarea>
                 <label for="edit_address" class="form-label ps-4">Address</label>
               </div>
             </div>
@@ -754,10 +765,20 @@
             alert("Incorrect OTP. Try again.");
           }
         });
-
       });
     });
+
+    
   });
+  const input = document.getElementById("edit_birth_date");
+  const today = new Date();
+  const tenYearsAgo = new Date(
+    today.getFullYear() - 10,
+    today.getMonth(),
+    today.getDate()
+  );
+
+  input.max = tenYearsAgo.toISOString().split("T")[0];
 </script>
 
 <?php

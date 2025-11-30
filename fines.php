@@ -16,12 +16,22 @@
   showHeader("Fines");
 ?>
 
-<main class="m-4">
+<main class="p-4">
   <?= showAlert(); ?>
-  <section class="my-3">
-    <h3 class="fw-semibold"><i class="bi bi-cash-stack"></i> Fines</h3>
-    <div class="px-lg-6">
-      <ul class="nav nav-pills mt-4 border-bottom border-primary" role="tablist">
+  <section class="my-3 px-lg-6">
+    <div class="row d-flex justify-content-between align-items-center gy-3">
+      <h3 class="col-12 col-lg-9 fw-semibold"><i class="bi bi-cash-stack"></i> Fines</h3>
+      <div class="col-12 col-lg-3">
+        <div class="position-relative search-container">
+          <input type="text" id="search_input" class="form-control ps-5" placeholder="Search...">
+          <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-muted">
+            <i class="bi bi-search"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <ul class="nav nav-pills mt-4 border-bottom border-primary" id="fines_tab" role="tablist">
         <li class="nav-item">
           <button class="nav-link active rounded-top-3 rounded-0 rounded-bottom-0 position-relative" data-bs-toggle="tab" data-bs-target="#unpaid" type="button">
             Unpaid
@@ -55,6 +65,7 @@
               t.borrow_date,
               t.return_date,
               t.due_date,
+              t.completion_date,
               b.title, 
               b.author 
             FROM fines f 
@@ -80,6 +91,7 @@
               data-borrowdate="<?= $unpaid_row["borrow_date"] ?>"
               data-returndate="<?= $unpaid_row["return_date"] ?>"
               data-duedate="<?= $unpaid_row["due_date"] ?>"
+              data-completiondate="<?= $unpaid_row["completion_date"] ?>"
               data-amount="<?= $amount ?>"
               data-reason="<?= $unpaid_row["reason"] ?>"
               data-status="<?= $unpaid_row["status"] ?>"
@@ -88,7 +100,13 @@
                 <div class="row justify-content-between align-items-center">
                   <div class="col-md-6">
                     <h6 class="mb-0 fw-normal">
-                      <span class="fw-semibold"><?= $unpaid_row["title"] ?></span> by <span class="fw-semibold"><?= $unpaid_row["author"] ?></span>
+                      <span class="fw-semibold">
+                        <a href="book_information.php?book_id=<?= $unpaid_row["book_id"]; ?>&source=fines&tab=unpaid" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                          <?= $unpaid_row["title"] ?> 
+                        </a>
+                        by
+                        <span class="fw-semibold"><?= $unpaid_row["author"] ?>
+                      </span>
                     </h6>
                   </div>
                   <div class="col-md-6 d-flex justify-content-between align-items-center gap-3 mt-2 mt-lg-0">
@@ -117,6 +135,7 @@
               t.borrow_date,
               t.return_date,
               t.due_date,
+              t.completion_date,
               b.title, 
               b.author 
             FROM fines f 
@@ -140,6 +159,7 @@
               data-borrowdate="<?= $paid_row["borrow_date"] ?>"
               data-returndate="<?= $paid_row["return_date"] ?>"
               data-duedate="<?= $paid_row["due_date"] ?>"
+              data-completiondate="<?= $paid_row["completion_date"] ?>"
               data-amount="<?= $amount ?>"
               data-reason="<?= $paid_row["reason"] ?>"
               data-status="<?= $paid_row["status"] ?>"
@@ -149,7 +169,13 @@
                 <div class="row justify-content-between align-items-center">
                   <div class="col-md-6">
                     <h6 class="mb-0 fw-normal">
-                      <span class="fw-semibold"><?= $paid_row["title"] ?></span> by <span class="fw-semibold"><?= $paid_row["author"] ?></span>
+                      <span class="fw-semibold">
+                        <a href="book_information.php?book_id=<?= $paid_row["book_id"]; ?>&source=fines&tab=paid" class="text-dark fw-semibold link-offset-1 link-underline-dark link-underline-opacity-50 link-underline-opacity-75-hover">
+                          <?= $paid_row["title"] ?> 
+                        </a>
+                        by 
+                        <span class="fw-semibold"><?= $paid_row["author"] ?>
+                      </span>
                     </h6>
                   </div>
                   <div class="col-md-6 d-flex justify-content-between align-items-center gap-3 mt-2 mt-lg-0">
@@ -205,6 +231,10 @@
               <td id="fine_due_date"></td>
             </tr>
             <tr>
+              <th>Completion Date:</th>
+              <td id="fine_completion_date"></td>
+            </tr>
+            <tr>
               <th>Amount:</th>
               <td id="fine_amount"></td>
             </tr>
@@ -227,9 +257,60 @@
   </div>
 
   <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabFromUrl = urlParams.get("tab");
+
+    if (tabFromUrl) {
+      const triggerEl = document.querySelector(`#fines_tab button[data-bs-target="#${tabFromUrl}"]`);
+      if (triggerEl) {
+        const tab = new bootstrap.Tab(triggerEl);
+        tab.show();
+      }
+    }
+
+    document.querySelectorAll('#fines_tab button[data-bs-toggle="tab"]').forEach(button => {
+      button.addEventListener('shown.bs.tab', (event) => {
+        const targetId = event.target.getAttribute('data-bs-target').substring(1);
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('tab', targetId);
+        window.history.replaceState({}, '', newUrl);
+      });
+    });
+
+
+    const searchInput = document.getElementById("search_input");
+    const cards = document.querySelectorAll(".card");
+
+    function filterCards() {
+      const query = searchInput.value.toLowerCase();
+
+      cards.forEach(card => {
+        const dataText = [
+          card.dataset.title,
+          card.dataset.author,
+          card.dataset.description,
+          card.dataset.reservedate,
+          card.dataset.borrowdate,
+          card.dataset.returndate,
+          card.dataset.duedate,
+          card.dataset.completiondate,
+          card.dataset.status,
+          card.dataset.fineamount
+        ].join(" ").toLowerCase();
+
+        const matchesSearch = query === "" || dataText.includes(query);
+
+        card.classList.toggle("d-none", !(matchesSearch));
+      });
+    }
+    searchInput.addEventListener("input", filterCards);
+
     document.querySelectorAll(".transaction").forEach(fine => {
       fine.addEventListener("click", () => {
         function formatDate(dateValue) {
+          if (!dateValue) {
+            return "N/A";
+          }
           const date = dateValue.split(" ")[0];
 
           const dateObj = new Date(date);
@@ -246,6 +327,7 @@
         document.getElementById("fine_borrow_date").innerText = formatDate(fine.dataset.borrowdate);
         document.getElementById("fine_return_date").innerText = formatDate(fine.dataset.returndate);
         document.getElementById("fine_due_date").innerText = formatDate(fine.dataset.duedate);
+        document.getElementById("fine_completion_date").innerText = formatDate(fine.dataset.completiondate);
         document.getElementById("fine_amount").innerText = "₱" + fine.dataset.amount;
         document.getElementById("fine_reason").innerText = fine.dataset.reason;
 
