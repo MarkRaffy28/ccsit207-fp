@@ -1,16 +1,12 @@
 <?php
-// admin_books.php
 session_start();
 
-// DATABASE CONNECTION
 include("config.php");
 
-// Initialize variables to avoid nulls
 $id = $title = $description = $author = $publisher = $year = $isbn = $genre = $language = $availability = "";
-$total = $available = 1; // default 1
+$total = $available = 1;
 $image = null;
 
-// EDIT MODE
 if (isset($_GET["edit"])) {
     $id = $_GET["edit"];
     $stmt = $conn->prepare("SELECT * FROM books WHERE id = ?");
@@ -28,13 +24,12 @@ if (isset($_GET["edit"])) {
         $language = $book["language"] ?? "English";
         $availability = $book["availability"] ?? "Available";
         $total = $book["total_copies"] ?? 1;
-        $available = $book["available_copies"] ?? 1;
+        $available = $book["available_copies"];
         $image = $book["image"] ?? null;
     }
     $stmt->close();
 }
 
-// ADD BOOK
 if (isset($_POST["add_book"])) {
     $title = $_POST["title"] ?: "";
     $description = $_POST["description"] ?: "";
@@ -46,7 +41,7 @@ if (isset($_POST["add_book"])) {
     $language = $_POST["language"] ?: "English";
     $availability = $_POST["availability"] ?: "Available";
     $total = $_POST["total_copies"] ?: 1;
-    $available = $_POST["available_copies"] ?: 1;
+    $available = $_POST["available_copies"];
     $image = !empty($_FILES["image"]["tmp_name"]) ? file_get_contents($_FILES["image"]["tmp_name"]) : null;
 
     $stmt = $conn->prepare("INSERT INTO books (image, title, description, author, publisher, publication_year, isbn, genre, language, availability, total_copies, available_copies)
@@ -61,7 +56,6 @@ if (isset($_POST["add_book"])) {
     exit;
 }
 
-// UPDATE BOOK
 if (isset($_POST["update_book"])) {
     $id = $_POST["book_id"];
     $title = $_POST["title"] ?: "";
@@ -74,7 +68,7 @@ if (isset($_POST["update_book"])) {
     $language = $_POST["language"] ?: "English";
     $availability = $_POST["availability"] ?: "Available";
     $total = $_POST["total_copies"] ?: 1;
-    $available = $_POST["available_copies"] ?: 1;
+    $available = $_POST["available_copies"] ;
 
     if (!empty($_FILES["image"]["tmp_name"])) {
         $image = addslashes(file_get_contents($_FILES["image"]["tmp_name"]));
@@ -92,7 +86,6 @@ if (isset($_POST["update_book"])) {
     exit;
 }
 
-// DELETE BOOK
 if (isset($_GET["delete"])) {
     $id = $_GET["delete"];
     $conn->query("DELETE FROM books WHERE id=$id");
@@ -101,7 +94,6 @@ if (isset($_GET["delete"])) {
     exit;
 }
 
-// FETCH BOOKS
 $books = $conn->query("SELECT * FROM books ORDER BY created_at DESC");
 ?>
 

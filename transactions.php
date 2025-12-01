@@ -623,7 +623,7 @@
           }
           while ($completed_row = $completed_result->fetch_assoc()):
             $borrow_date = date("F j, Y", strtotime($completed_row["borrow_date"]));
-            $paid_date = date("F j, Y", strtotime($completed_row["paid_at"]));
+            $paid_date = date("F j, Y", strtotime($completed_row["paid_at"] ?? ""));
             $completed_id = $completed_row["id"];
         ?>
             <div class="card border-0 shadow-sm rounded-4 mb-3 cursor-pointer"
@@ -1111,6 +1111,18 @@
         document.getElementById("reserve_message").innerHTML = `Please return the book on <span class='fw-bold'>${rm} ${rd}, ${ry}</span> or not later than <span class='fw-bold'>${dm} ${dd}, ${dy}</span> to avoid fines.`;
       } 
     });
+
+    [editBorrowDate, editReturnDate].forEach(input => {
+      input.addEventListener("input", () => {
+          const selectedDate = new Date(input.value);
+          const day = selectedDate.getDay(); 
+
+          if(day === 0) { 
+            alert("Sundays are not allowed. Please select another day.");
+            input.value = ''; 
+          }
+      })
+    })
 
     document.querySelectorAll(".cancel-button").forEach(btn => {
       btn.addEventListener("click", ()=> {

@@ -1,11 +1,8 @@
 <?php
-// Start session (optional, if you want login control later)
 session_start();
 
-// --- DATABASE CONNECTION ---
 include("config.php");
 
-// --- ALERT FUNCTION ---
 function showAlert($message, $type = "success") {
     echo "<div class='alert alert-$type alert-dismissible fade show' role='alert'>
             $message
@@ -13,7 +10,6 @@ function showAlert($message, $type = "success") {
           </div>";
 }
 
-// --- ADD USER ---
 if (isset($_POST["add_user"])) {
     $username = $_POST["username"];
     $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
@@ -53,7 +49,6 @@ if (isset($_POST["add_user"])) {
     $stmt->close();
 }
 
-// --- DELETE USER ---
 if (isset($_GET["delete"])) {
     $id = $_GET["delete"];
     $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
@@ -126,7 +121,6 @@ if (isset($_GET["delete"])) {
     </div>
 </div>
 
-<!-- ADD USER MODAL -->
 <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">

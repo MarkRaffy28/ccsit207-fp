@@ -20,7 +20,7 @@
       $stmt->bind_param("ii", $fine, $transac_id);
       $stmt->execute();
 
-      $stmt2 = $conn->prepare("INSERT INTO fines (transaction_id, amount, reason) VALUES (?, ?, 'Overdue')");
+      $stmt2 = $conn->prepare("INSERT INTO fines (transaction_id, amount, reason) VALUES (?, ?, 'Overdue Fine')");
       $stmt2->bind_param("ii", $transac_id, $fine);
       $stmt2->execute();
     }
