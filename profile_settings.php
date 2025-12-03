@@ -279,6 +279,13 @@
         <div class="info-label"><i class="bi bi-cake2 me-2"></i> Birth Date</div>
         <div class="info-value"><?= date("F j, Y", strtotime($row["birth_date"])) ?></div>
       </div>
+
+      <div class="info-row">
+        <div class="info-label"><i class="bi bi-calendar-heart me-2"></i> Age</div>
+        <div class="info-value">
+            <?= (new DateTime())->diff(new DateTime($row["birth_date"]))->y ?> years old
+        </div>
+      </div>
       
       <div class="info-row">
         <div class="info-label"><i class="bi bi-telephone me-2"></i> Contact Number</div>
@@ -523,8 +530,8 @@
 
             <div class="row mb-2 gx-3 gy-2 gy-lg-0">
               <div class="col-sm form-floating">
-                <input type="text" class="form-control" id="edit_strand" name="edit_strand" placeholder="Strand" value="<?= htmlspecialchars($row["strand"]); ?>">
-                <label for="edit_strand" class="form-label ps-4">Strand</label>
+                <input type="text" class="form-control" id="edit_strand" name="edit_strand" placeholder="Strand" value="<?= htmlspecialchars($row["strand"]); ?>" maxlength="100">
+                <label for="edit_strand" class="form-label ps-4">Strand (if Senior High School)</label>
               </div>     
               <div class="col-sm form-floating">
                 <input type="text" class="form-control" id="edit_year_section" name="edit_year_section" placeholder="Year & Section" value="<?= htmlspecialchars($row["year_section"]); ?>">
